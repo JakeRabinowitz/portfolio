@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Ink.js Script Editor</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .header {
+                background-color: #2d2d30;
+                padding: 1rem;
+                border-bottom: 1px solid #3e3e42;
+                text-align: center;
+            }
+
+            .header h1 {
+                color: #ffffff;
+                font-size: 1.5rem;
+                font-weight: 300;
+            }
+
+            .container {
+                display: flex;
+                height: calc(100vh - 80px);
+            }
+
+            .panel {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .panel-header {
+                background-color: #2d2d30;
+                padding: 0.5rem 1rem;
+                border-bottom: 1px solid #3e3e42;
+                font-weight: 500;
+                text-transform: uppercase;
+                font-size: 0.8rem;
+                letter-spacing: 0.5px;
+            }
+
+            .editor-panel {
+                border-right: 1px solid #3e3e42;
+            }
+
+            .editor {
+                flex: 1;
+                background-color: #1e1e1e;
+                border: none;
+                color: #d4d4d4;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                font-size: 14px;
+                line-height: 1.5;
+                padding: 1rem;
+                resize: none;
+                outline: none;
+            }
+
+            .editor:focus {
+                background-color: #252526;
+            }
+
+            .output-panel {
+                background-color: #252526;
+            }
+
+            .output {
+                flex: 1;
+                padding: 1rem;
+                overflow-y: auto;
+                background-color: #252526;
+            }
+
+            .story-content {
+                max-width: 100%;
+                line-height: 1.6;
+            }
+
+            .story-text {
+                margin-bottom: 1rem;
+                color: #d4d4d4;
+            }
+
+            .choice-selected {
+                margin-bottom: 1rem;
+                color: #4fc3f7;
+                font-weight: bold;
+                padding: 0.5rem;
+                background-color: rgba(79, 195, 247, 0.1);
+                border-left: 3px solid #4fc3f7;
+                border-radius: 0 4px 4px 0;
+            }
+
+            .choices {
+                margin: 1rem 0;
+            }
+
+            .choice {
+                display: block;
+                background-color: #0e639c;
+                color: white;
+                padding: 0.5rem 1rem;
+                margin: 0.5rem 0;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                text-align: left;
+                font-size: 14px;
+                transition: background-color 0.2s;
+            }
+
+            .choice:hover {
+                background-color: #1177bb;
+            }
+
+            .choice:focus {
+                outline: 2px solid #007acc;
+                outline-offset: 2px;
+            }
+
+            .error {
+                background-color: #5a1d1d;
+                border: 1px solid #be1100;
+                color: #f48771;
+                padding: 1rem;
+                margin: 1rem 0;
+                border-radius: 4px;
+                font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+                font-size: 13px;
+                white-space: pre-wrap;
+            }
+
+            .controls {
+                background-color: #2d2d30;
+                padding: 0.5rem 1rem;
+                border-top: 1px solid #3e3e42;
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            .btn {
+                background-color: #0e639c;
+                color: white;
+                border: none;
+                padding: 0.5rem 1rem;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 13px;
+                transition: background-color 0.2s;
+            }
+
+            .btn:hover {
+                background-color: #1177bb;
+            }
+
+            .btn:disabled {
+                background-color: #3e3e42;
+                cursor: not-allowed;
+            }
+
+            .status {
+                color: #cccccc;
+                font-size: 12px;
+                margin-left: auto;
+            }
+
+            @media (max-width: 768px) {
+                .container {
+                    flex-direction: column;
+                }
+
+                .editor-panel {
+                    border-right: none;
+                    border-bottom: 1px solid #3e3e42;
+                }
+
+                .panel {
+                    height: 50%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Ink.js Script Editor</h1>
+        </div>
+
+        <div class="container">
+            <div class="panel editor-panel">
+                <div class="panel-header">Ink Script</div>
+                <textarea class="editor" id="inkEditor" placeholder="Enter your Ink script here...">Hello world!
+
+This is a simple example story.
+
+* [Continue] -> continue
+* [Start over] -> start_over
+
+=== continue ===
+You chose to continue the story.
+
+What would you like to do next?
+
+* [Explore] -> explore
+* [Rest] -> rest
+* [Go back] -> start_over
+
+=== explore ===
+You venture forth into the unknown...
+
+The path splits ahead of you.
+
+* [Take the left path] -> left_path
+* [Take the right path] -> right_path
+
+=== left_path ===
+You take the left path and discover a beautiful garden.
+
+-> END
+
+=== right_path ===
+You take the right path and find a mysterious cave.
+
+-> END
+
+=== rest ===
+You decide to rest for a while.
+
+-> END
+
+=== start_over ===
+-> DONE</textarea>
+                <div class="controls">
+                    <button class="btn" id="runBtn">Run Script</button>
+                    <button class="btn" id="resetBtn">Reset Story</button>
+                    <div class="status" id="status">Ready</div>
+                </div>
+            </div>
+
+            <div class="panel output-panel">
+                <div class="panel-header">Story Output</div>
+                <div class="output" id="output">
+                    <div class="story-content">
+                        <div class="story-text">Click "Run Script" to start your story...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/inkjs@2.3.2/dist/ink-full.min.js"></script>
+        <script>
+            class InkEditor {
+                constructor() {
+                    this.editor = document.getElementById('inkEditor');
+                    this.output = document.getElementById('output');
+                    this.runBtn = document.getElementById('runBtn');
+                    this.resetBtn = document.getElementById('resetBtn');
+                    this.status = document.getElementById('status');
+
+                    this.story = null;
+
+                    this.bindEvents();
+
+                    // Wait a bit for ink.js to fully load
+                    setTimeout(() => {
+                        console.log('Available inkjs object:', window.inkjs);
+                        this.runScript();
+                    }, 100);
+                }
+
+                bindEvents() {
+                    this
+                        .runBtn
+                        .addEventListener('click', () => this.runScript());
+                    this
+                        .resetBtn
+                        .addEventListener('click', () => this.resetStory());
+
+                    // Auto-run when typing stops for 1 second
+                    let timeout;
+                    this
+                        .editor
+                        .addEventListener('input', () => {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(() => this.runScript(), 1000);
+                        });
+                }
+
+                updateStatus(message, isError = false) {
+                    this.status.textContent = message;
+                    this.status.style.color = isError
+                        ? '#f48771'
+                        : '#cccccc';
+                }
+
+                runScript() {
+                    const inkScript = this
+                        .editor
+                        .value
+                        .trim();
+
+                    if (!inkScript) {
+                        this.clearOutput();
+                        this.updateStatus('No script to run');
+                        return;
+                    }
+
+                    try {
+                        this.updateStatus('Compiling...');
+
+                        // Check if ink.js is available
+                        if (typeof window.inkjs === 'undefined') {
+                            this.showError('Ink.js library not loaded yet. Please wait...');
+                            this.updateStatus('Library not ready', true);
+                            return;
+                        }
+
+                        // Use the correct ink.js 2.3.2 API
+                        console.log('Attempting compilation with ink.js 2.3.2');
+                        console.log('Available inkjs methods:', Object.keys(window.inkjs || {}));
+
+                        // Compile the script using the new API - this returns a Story directly
+                        const compiler = new window
+                            .inkjs
+                            .Compiler(inkScript);
+                        this.story = compiler.Compile();
+
+                        // Check for compilation errors on the compiler object
+                        if (compiler.errors && compiler.errors.length > 0) {
+                            this.showError('Compilation Errors:\n' + compiler.errors.join('\n'));
+                            this.updateStatus('Compilation failed', true);
+                            return;
+                        }
+
+                        if (compiler.warnings && compiler.warnings.length > 0) {
+                            console.warn('Compilation warnings:', compiler.warnings);
+                        }
+
+                        // Story is already created by Compile() method
+                        this.updateStatus('Story loaded successfully');
+                        this.displayStory(true); // New story, clear output
+
+                    } catch (error) {
+                        this.showError('Error: ' + error.message);
+                        this.updateStatus('Error occurred', true);
+                        console.error('Ink compilation error:', error);
+                    }
+                }
+
+                resetStory() {
+                    if (this.story) {
+                        this
+                            .story
+                            .ResetState();
+                        this.displayStory(true); // Reset story, clear output
+                        this.updateStatus('Story reset');
+                    }
+                }
+
+                displayStory(isNewStory = false) {
+                    if (!this.story) 
+                        return;
+                    
+                    // Only clear output for new stories, not for continuing existing ones
+                    if (isNewStory) {
+                        this.clearOutput();
+                    }
+
+                    // Continue the story until we need player input
+                    while (this.story.canContinue) {
+                        const paragraph = document.createElement('div');
+                        paragraph.className = 'story-text';
+                        paragraph.textContent = this
+                            .story
+                            .Continue();
+                        this
+                            .output
+                            .appendChild(paragraph);
+                    }
+
+                    // Remove any existing choices (so we don't have multiple choice sets)
+                    const existingChoices = this
+                        .output
+                        .querySelector('.choices');
+                    if (existingChoices) {
+                        existingChoices.remove();
+                    }
+
+                    // Show choices if available
+                    if (this.story.currentChoices.length > 0) {
+                        const choicesContainer = document.createElement('div');
+                        choicesContainer.className = 'choices';
+
+                        this
+                            .story
+                            .currentChoices
+                            .forEach((choice, index) => {
+                                const choiceBtn = document.createElement('button');
+                                choiceBtn.className = 'choice';
+                                choiceBtn.textContent = choice.text;
+                                choiceBtn.addEventListener('click', () => {
+                                    // Show the selected choice in the story history
+                                    const selectedChoice = document.createElement('div');
+                                    selectedChoice.className = 'choice-selected';
+                                    selectedChoice.textContent = `> ${choice.text}`;
+
+                                    // Remove the choices and add the selected choice
+                                    choicesContainer.remove();
+                                    this
+                                        .output
+                                        .appendChild(selectedChoice);
+
+                                    // Make the choice and continue the story
+                                    this
+                                        .story
+                                        .ChooseChoiceIndex(index);
+                                    this.displayStory(false); // Continue existing story, don't clear
+                                });
+                                choicesContainer.appendChild(choiceBtn);
+                            });
+
+                        this
+                            .output
+                            .appendChild(choicesContainer);
+                    }
+
+                    // Check if story has ended
+                    if (!this.story.canContinue && this.story.currentChoices.length === 0) {
+                        const endMessage = document.createElement('div');
+                        endMessage.className = 'story-text';
+                        endMessage.style.fontStyle = 'italic';
+                        endMessage.style.opacity = '0.7';
+                        endMessage.textContent = 'Story ended.';
+                        this
+                            .output
+                            .appendChild(endMessage);
+                    }
+
+                    // Auto-scroll to bottom
+                    this.output.scrollTop = this.output.scrollHeight;
+                }
+
+                showError(errorMessage) {
+                    this.clearOutput();
+
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.textContent = errorMessage;
+
+                    this
+                        .output
+                        .appendChild(errorDiv);
+                }
+
+                clearOutput() {
+                    this.output.innerHTML = '';
+                }
+            }
+
+            // Initialize the editor when the page loads
+            document.addEventListener('DOMContentLoaded', () => {
+                new InkEditor();
+            });
+        </script>
+    </body>
+</html>
