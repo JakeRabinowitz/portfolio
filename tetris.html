@@ -1,694 +1,833 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Tetris — Playable</title>
-  <style>
-    :root{--bg:#071026;--panel:#0f1724;--accent:#7dd3fc;--muted:#94a3b8}
-    *{box-sizing:border-box;touch-action:manipulation}
-    html,body{height:100%;margin:0;overflow:hidden;font-family:Inter,system-ui,Segoe UI,Arial;background:linear-gradient(180deg,#071024 0%,var(--bg) 100%);color:#e6eef8}
-    .container{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 8px env(safe-area-inset-bottom,8px);gap:4px}
-    .top-hud{display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px 16px;width:100%;max-width:420px;padding:0 4px}
-    .hud-stats.info{display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;padding:8px 14px;min-width:90px}
-    .hud-stats .small{margin-top:6px}
-    .hud-stats .small:first-child{margin-top:0}
-    .hud-next.info{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 10px}
-    .hud-actions{display:flex;flex-direction:row;flex-wrap:wrap;gap:6px;align-items:center}
-    .game{display:flex;flex-direction:row;justify-content:center;align-items:center;flex:1;width:100%}
-    canvas#tetris{background:#061025;touch-action:none;border:1px solid rgba(255,255,255,0.15);border-radius:4px}
-    .info{background:rgba(255,255,255,0.03);border-radius:10px}
-    .big{font-size:18px;font-weight:700;color:var(--accent)}
-    .small{font-size:11px;color:var(--muted)}
-    button.btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:8px 14px;border-radius:10px;color:inherit;font-size:13px}
-    .touch-controls{display:flex;gap:10px;flex-wrap:nowrap;justify-content:center;width:100%;max-width:420px}
-    .touch-controls button{flex:1;max-width:180px;height:52px;font-size:22px;border-radius:14px;padding:0}
-    .footer{font-size:10px;color:var(--muted);text-align:center;opacity:0.7}
-    @media (max-height:700px){
-      .footer{display:none}
-      .touch-controls button{height:42px}
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="top-hud">
-      <div class="info hud-stats">
-        <div class="small">Score</div>
-        <div id="score" class="big">0</div>
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Tetris — Playable</title>
+    <style>
+      :root {
+        --bg: #071026;
+        --panel: #0f1724;
+        --accent: #7dd3fc;
+        --muted: #94a3b8;
+        --webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      * {
+        box-sizing: border-box;
+        touch-action: manipulation
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: Inter, system-ui, Segoe UI, Arial;
+        background: linear-gradient(180deg, #071024 0%, var(--bg) 100%);
+        color: #e6eef8
+      }
+
+      .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 8px env(safe-area-inset-bottom, 8px);
+        gap: 4px
+      }
+
+      .top-hud {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: center;
+        gap: 10px 16px;
+        width: 100%;
+        max-width: 420px;
+        padding: 0 4px
+      }
+
+      .hud-stats.info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1px;
+        text-align: center;
+        padding: 8px 14px;
+        min-width: 90px
+      }
+
+      .hud-stats .small {
+        margin-top: 6px
+      }
+
+      .hud-stats .small:first-child {
+        margin-top: 0
+      }
+
+      .hud-next.info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 6px 10px
+      }
+
+      .hud-actions {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center
+      }
+
+      .game {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        flex: 1;
+        width: 100%
+      }
+
+      canvas#tetris {
+        background: #061025;
+        touch-action: none;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 4px
+      }
+
+      .info {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px
+      }
+
+      .big {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent)
+      }
+
+      .small {
+        font-size: 11px;
+        color: var(--muted)
+      }
+
+      button.btn {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 8px 14px;
+        border-radius: 10px;
+        color: inherit;
+        font-size: 13px
+      }
+
+      .touch-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: nowrap;
+        justify-content: center;
+        width: 100%;
+        max-width: 420px
+      }
+
+      .touch-controls button {
+        flex: 1;
+        max-width: 180px;
+        height: 52px;
+        font-size: 22px;
+        border-radius: 14px;
+        padding: 0
+      }
+
+      .footer {
+        font-size: 10px;
+        color: var(--muted);
+        text-align: center;
+        opacity: 0.7
+      }
+
+      @media (max-height:700px) {
+        .footer {
+          display: none
+        }
+
+        .touch-controls button {
+          height: 42px
+        }
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="top-hud">
+        <div class="info hud-stats">
+          <div class="small">Score</div>
+          <div id="score" class="big">0</div>
+        </div>
+        <div class="info hud-next">
+          <div class="small">Next</div>
+          <canvas id="next" width="80" height="80" style="display:block"></canvas>
+        </div>
+        <div class="hud-actions">
+          <button id="restart" class="btn">Restart</button>
+          <button id="pause" class="btn">Pause</button>
+        </div>
       </div>
-      <div class="info hud-next">
-        <div class="small">Next</div>
-        <canvas id="next" width="80" height="80" style="display:block"></canvas>
+
+      <div class="game">
+        <canvas id="tetris" width="320" height="736"></canvas>
       </div>
-      <div class="hud-actions">
-        <button id="restart" class="btn">Restart</button>
-        <button id="pause" class="btn">Pause</button>
+
+      <div class="touch-controls" aria-hidden="false">
+        <button id="rotate-left" class="btn" aria-label="Rotate left">⟲</button>
+        <button id="rotate-right" class="btn" aria-label="Rotate right">⟳</button>
       </div>
+
+      <div class="footer small">Drag horizontally to move, release to drop; rotate with buttons or Z / X. Tap Restart to play again.</div>
     </div>
+    <script>
+      const COLS = 15, ROWS = 33;
+      const BLOCK = 32;
+      const BOARD_TOP_ROWS = 4;
+      const BOARD_TOP_PAD = BOARD_TOP_ROWS * BLOCK;
 
-    <div class="game">
-      <canvas id="tetris" width="320" height="736"></canvas>
-    </div>
+      const canvas = document.getElementById('tetris');
+      const ctx = canvas.getContext('2d');
+      canvas.width = COLS * BLOCK;
+      canvas.height = ROWS * BLOCK + BOARD_TOP_PAD;
 
-    <div class="touch-controls" aria-hidden="false">
-      <button id="rotate-left" class="btn" aria-label="Rotate left">⟲</button>
-      <button id="rotate-right" class="btn" aria-label="Rotate right">⟳</button>
-    </div>
+      // iPhone 17 Pro Max logical resolution: 393 x 852 (≈ 9:19.47)
+      // We fill the viewport, keeping aspect ratio, with the canvas as the centrepiece.
+      function fitCanvas() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
 
-    <div class="footer small">Drag horizontally to move, release to drop; rotate with buttons or Z / X. Tap Restart to play again.</div>
-  </div>
-<script>
-const COLS = 15, ROWS = 33;
-const BLOCK = 32;
-const BOARD_TOP_ROWS = 4;
-const BOARD_TOP_PAD = BOARD_TOP_ROWS * BLOCK;
+        // Reserve vertical space for HUD (~120px) + touch controls (~68px) + padding
+        const reservedV = 196;
+        const availH = Math.max(200, vh - reservedV);
+        const availW = Math.max(120, vw - 24);
 
-const canvas = document.getElementById('tetris');
-const ctx = canvas.getContext('2d');
-canvas.width = COLS * BLOCK;
-canvas.height = ROWS * BLOCK + BOARD_TOP_PAD;
+        const scaleH = availH / canvas.height;
+        const scaleW = availW / canvas.width;
+        const scale = Math.min(scaleH, scaleW);
 
-// iPhone 17 Pro Max logical resolution: 393 x 852 (≈ 9:19.47)
-// We fill the viewport, keeping aspect ratio, with the canvas as the centrepiece.
-function fitCanvas(){
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  // Reserve vertical space for HUD (~120px) + touch controls (~68px) + padding
-  const reservedV = 196;
-  const availH = Math.max(200, vh - reservedV);
-  const availW = Math.max(120, vw - 24);
-
-  const scaleH = availH / canvas.height;
-  const scaleW = availW / canvas.width;
-  const scale  = Math.min(scaleH, scaleW);
-
-  canvas.style.width  = Math.round(canvas.width  * scale) + 'px';
-  canvas.style.height = Math.round(canvas.height * scale) + 'px';
-}
-window.addEventListener('resize', fitCanvas);
-fitCanvas();
-
-function gridY(y) {
-  return BOARD_TOP_PAD + y * BLOCK;
-}
-
-const nextCanvas = document.getElementById('next');
-const nctx = nextCanvas.getContext('2d');
-
-const COLORS = { I: '#06b6d4', J: '#6366f1', L: '#f97316', O: '#f59e0b', S: '#10b981', T: '#a78bfa', Z: '#ef4444', X: '#334155' };
-const SHAPES = {
-  I: [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]]],
-  J: [[[1,0,0],[1,1,1],[0,0,0]],[[0,1,1],[0,1,0],[0,1,0]],[[0,0,0],[1,1,1],[0,0,1]],[[0,1,0],[0,1,0],[1,1,0]]],
-  L: [[[0,0,1],[1,1,1],[0,0,0]],[[0,1,0],[0,1,0],[0,1,1]],[[0,0,0],[1,1,1],[1,0,0]],[[1,1,0],[0,1,0],[0,1,0]]],
-  O: [[[1,1],[1,1]]],
-  S: [[[0,1,1],[1,1,0],[0,0,0]],[[0,1,0],[0,1,1],[0,0,1]]],
-  T: [[[0,1,0],[1,1,1],[0,0,0]],[[0,1,0],[0,1,1],[0,1,0]],[[0,0,0],[1,1,1],[0,1,0]],[[0,1,0],[1,1,0],[0,1,0]]],
-  Z: [[[1,1,0],[0,1,1],[0,0,0]],[[0,0,1],[0,1,1],[0,1,0]]]
-};
-
-function makeMatrix(w,h){ const m = []; for(let y=0;y<h;y++) m.push(new Array(w).fill(0)); return m; }
-let arena = makeMatrix(COLS, ROWS);
-
-let gameState = 'playing';
-let lineClearState = null;
-let gravityState = null;
-let releaseQuickFallActive = false;
-let releaseQuickFallTimer = 0;
-
-function findFullRows() {
-  const rows = [];
-  for(let y = 0; y < ROWS; y++) {
-    let full = true;
-    for(let x = 0; x < COLS; x++) if(!arena[y][x]) { full = false; break; }
-    if(full) rows.push(y);
-  }
-  return rows;
-}
-
-// True per-column gravity: after clearing rows, each column is processed
-// independently. For each cleared row, only the blocks in that column that
-// were strictly above it are allowed to fall. They fall freely until they
-// land on something (bottom of board or an existing block), so they can
-// fill gaps left by partial rows below.
-function compactRowsWithMoves(clearedRows) {
-  const sorted = clearedRows.slice().sort((a, b) => a - b); // top→bottom
-  const clearedSet = new Set(sorted);
-  const snapshot = arena.map(r => r.slice());
-
-  // Reset arena
-  for(let y = 0; y < ROWS; y++) for(let x = 0; x < COLS; x++) arena[y][x] = 0;
-
-  const moves = [];
-
-  for(let x = 0; x < COLS; x++) {
-    // Split the column into two segments:
-    //   "above" = rows above the topmost cleared row (these fall freely)
-    //   "below" = rows below each cleared row that were NOT cleared (stay put)
-    //
-    // Strategy: place "below" blocks first (they don't move), then drop
-    // "above" blocks from the bottom up into remaining free cells.
-
-    const topCleared = sorted[0]; // highest (smallest index) cleared row
-
-    // Blocks at or below the topmost cleared row that survived: keep in place
-    const belowBlocks = []; // { origY, type } in top→bottom order
-    for(let y = topCleared; y < ROWS; y++) {
-      if(!clearedSet.has(y) && snapshot[y][x]) {
-        belowBlocks.push({ origY: y, type: snapshot[y][x] });
+        canvas.style.width = Math.round(canvas.width * scale) + 'px';
+        canvas.style.height = Math.round(canvas.height * scale) + 'px';
       }
-    }
+      window.addEventListener('resize', fitCanvas);
+      fitCanvas();
 
-    // Place below-blocks back at their original positions (they never move)
-    for(const b of belowBlocks) {
-      arena[b.origY][x] = b.type;
-    }
-
-    // Blocks strictly above the topmost cleared row: collect top→bottom
-    const aboveBlocks = [];
-    for(let y = 0; y < topCleared; y++) {
-      if(snapshot[y][x]) aboveBlocks.push({ origY: y, type: snapshot[y][x] });
-    }
-
-    // Drop each above-block from bottom to top of the above-block list.
-    // Each block falls from its original row downward until it hits a filled
-    // cell or the board bottom.
-    for(let i = aboveBlocks.length - 1; i >= 0; i--) {
-      const b = aboveBlocks[i];
-      let destY = b.origY;
-      while(destY + 1 < ROWS && !arena[destY + 1][x]) destY++;
-      arena[destY][x] = b.type;
-      if(destY !== b.origY) {
-        moves.push({ x, fromY: b.origY, toY: destY, type: b.type, t: 0 });
+      function gridY(y) {
+        return BOARD_TOP_PAD + y * BLOCK;
       }
-    }
-  }
 
-  return moves;
-}
+      const nextCanvas = document.getElementById('next');
+      const nctx = nextCanvas.getContext('2d');
 
-function applyLineClearScore(rowCount) {
-  if(rowCount <= 0) return;
-  player.score += rowCount * 10;
-  player.level = Math.floor(player.score / 100);
-}
+      const COLORS = { I: '#06b6d4', J: '#6366f1', L: '#f97316', O: '#f59e0b', S: '#10b981', T: '#a78bfa', Z: '#ef4444', X: '#334155' };
+      const SHAPES = {
+        I: [[[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]]],
+        J: [[[1, 0, 0], [1, 1, 1], [0, 0, 0]], [[0, 1, 1], [0, 1, 0], [0, 1, 0]], [[0, 0, 0], [1, 1, 1], [0, 0, 1]], [[0, 1, 0], [0, 1, 0], [1, 1, 0]]],
+        L: [[[0, 0, 1], [1, 1, 1], [0, 0, 0]], [[0, 1, 0], [0, 1, 0], [0, 1, 1]], [[0, 0, 0], [1, 1, 1], [1, 0, 0]], [[1, 1, 0], [0, 1, 0], [0, 1, 0]]],
+        O: [[[1, 1], [1, 1]]],
+        S: [[[0, 1, 1], [1, 1, 0], [0, 0, 0]], [[0, 1, 0], [0, 1, 1], [0, 0, 1]]],
+        T: [[[0, 1, 0], [1, 1, 1], [0, 0, 0]], [[0, 1, 0], [0, 1, 1], [0, 1, 0]], [[0, 0, 0], [1, 1, 1], [0, 1, 0]], [[0, 1, 0], [1, 1, 0], [0, 1, 0]]],
+        Z: [[[1, 1, 0], [0, 1, 1], [0, 0, 0]], [[0, 0, 1], [0, 1, 1], [0, 1, 0]]]
+      };
 
-function finishLineClearPhase() {
-  const rows = lineClearState.rows;
-  const rowCount = rows.length;
-  for(const y of rows) for(let x = 0; x < COLS; x++) arena[y][x] = 0;
-  applyLineClearScore(rowCount);
-  updateScore();
+      function makeMatrix(w, h) { const m = []; for (let y = 0; y < h; y++) m.push(new Array(w).fill(0)); return m; }
+      let arena = makeMatrix(COLS, ROWS);
 
-  const moves = compactRowsWithMoves(rows);
-  lineClearState = null;
+      let gameState = 'playing';
+      let lineClearState = null;
+      let gravityState = null;
+      let releaseQuickFallActive = false;
+      let releaseQuickFallTimer = 0;
 
-  if(moves.length) {
-    const GRAVITY_ROWS_PER_MS = 0.018; // rows per millisecond — tune this for feel
-    moves.forEach(b => { b.currentY = b.fromY; });
-    gravityState = { blocks: moves, speed: GRAVITY_ROWS_PER_MS };
-    gameState = 'gravity';
-  } else {
-    afterGravityChain();
-  }
-}
-
-function afterGravityChain() {
-  const more = findFullRows();
-  if(more.length) {
-    lineClearState = { rows: more, phase: 'jiggle', elapsed: 0 };
-    gameState = 'lineClear';
-  } else {
-    gameState = 'playing';
-    playerReset();
-  }
-}
-
-function afterLockPiece() {
-  releaseQuickFallActive = false;
-  releaseQuickFallTimer = 0;
-  player.matrix = null;
-  const rows = findFullRows();
-  if(rows.length) {
-    lineClearState = { rows, phase: 'jiggle', elapsed: 0 };
-    gameState = 'lineClear';
-  } else {
-    playerReset();
-  }
-}
-
-function collide(arena, piece){
-  for(let y=0;y<piece.matrix.length;y++) for(let x=0;x<piece.matrix[y].length;x++){
-    if(piece.matrix[y][x]){
-      const px = piece.x + x, py = piece.y + y;
-      if(py >= ROWS || px < 0 || px >= COLS) return true;
-      if(py >= 0 && arena[py][px]) return true;
-    }
-  }
-  return false;
-}
-
-function merge(arena, piece){
-  for(let y=0;y<piece.matrix.length;y++) for(let x=0;x<piece.matrix[y].length;x++){
-    if(!piece.matrix[y][x] || piece.y + y < 0) continue;
-    const px = piece.x + x;
-    if(px < 0 || px >= COLS) continue;
-    arena[piece.y + y][px] = piece.type;
-  }
-}
-
-function rotate(matrix, dir){
-  const m = matrix.map(r=>r.slice());
-  for (let y = 0; y < m.length; ++y) for (let x = 0; x < y; ++x) {
-    [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
-  }
-  if(dir > 0) m.forEach(r => r.reverse());
-  else m.reverse();
-  return m;
-}
-
-function drawMatrix(ctx, matrix, offset, colors) {
-  matrix.forEach((row,y) => {
-    row.forEach((value,x) => {
-      if(value){
-        ctx.fillStyle = colors[value] || '#666';
-        ctx.fillRect(offset.x + x * BLOCK, offset.y + y * BLOCK, BLOCK-1, BLOCK-1);
+      function findFullRows() {
+        const rows = [];
+        for (let y = 0; y < ROWS; y++) {
+          let full = true;
+          for (let x = 0; x < COLS; x++) if (!arena[y][x]) { full = false; break; }
+          if (full) rows.push(y);
+        }
+        return rows;
       }
-    });
-  });
-}
 
-function matrixFilledXBounds(matrix) {
-  let minX = 99, maxX = -1;
-  for(let y = 0; y < matrix.length; y++) for(let x = 0; x < matrix[y].length; x++) {
-    if(matrix[y][x]) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
-  }
-  return { minX, maxX };
-}
+      // True per-column gravity: after clearing rows, each column is processed
+      // independently. For each cleared row, only the blocks in that column that
+      // were strictly above it are allowed to fall. They fall freely until they
+      // land on something (bottom of board or an existing block), so they can
+      // fill gaps left by partial rows below.
+      function compactRowsWithMoves(clearedRows) {
+        const sorted = clearedRows.slice().sort((a, b) => a - b); // top→bottom
+        const clearedSet = new Set(sorted);
+        const snapshot = arena.map(r => r.slice());
 
-function playerXBounds(matrix) {
-  const { minX, maxX } = matrixFilledXBounds(matrix);
-  if(maxX < 0) return { min: 0, max: Math.max(0, COLS - matrix[0].length) };
-  return { min: -minX, max: COLS - 1 - maxX };
-}
+        // Reset arena
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) arena[y][x] = 0;
 
-function matrixBottomOffset(matrix) {
-  let maxY = 0;
-  for(let y = 0; y < matrix.length; y++) for(let x = 0; x < matrix[y].length; x++) {
-    if(matrix[y][x]) maxY = Math.max(maxY, y);
-  }
-  return maxY;
-}
+        const moves = [];
 
-function spawnYAboveBoard(matrix) {
-  return -matrixBottomOffset(matrix) - 1;
-}
+        for (let x = 0; x < COLS; x++) {
+          // Split the column into two segments:
+          //   "above" = rows above the topmost cleared row (these fall freely)
+          //   "below" = rows below each cleared row that were NOT cleared (stay put)
+          //
+          // Strategy: place "below" blocks first (they don't move), then drop
+          // "above" blocks from the bottom up into remaining free cells.
 
-function drawGhost(ctx, piece, ghostY) {
-  if(!piece.matrix || ghostY === player.y) return;
-  ctx.save();
-  ctx.globalAlpha = 0.48;
-  ctx.strokeStyle = COLORS[piece.type] || '#94a3b8';
-  ctx.lineWidth = 4;
-  piece.matrix.forEach((row, yy) => {
-    row.forEach((value, xx) => {
-      if(value){
-        const px = piece.x + xx, py = ghostY + yy;
-        ctx.strokeRect(px * BLOCK + 2, gridY(py) + 2, BLOCK - 5, BLOCK - 5);
+          const topCleared = sorted[0]; // highest (smallest index) cleared row
+
+          // Blocks at or below the topmost cleared row that survived: keep in place
+          const belowBlocks = []; // { origY, type } in top→bottom order
+          for (let y = topCleared; y < ROWS; y++) {
+            if (!clearedSet.has(y) && snapshot[y][x]) {
+              belowBlocks.push({ origY: y, type: snapshot[y][x] });
+            }
+          }
+
+          // Place below-blocks back at their original positions (they never move)
+          for (const b of belowBlocks) {
+            arena[b.origY][x] = b.type;
+          }
+
+          // Blocks strictly above the topmost cleared row: collect top→bottom
+          const aboveBlocks = [];
+          for (let y = 0; y < topCleared; y++) {
+            if (snapshot[y][x]) aboveBlocks.push({ origY: y, type: snapshot[y][x] });
+          }
+
+          // Drop each above-block from bottom to top of the above-block list.
+          // Each block falls from its original row downward until it hits a filled
+          // cell or the board bottom.
+          for (let i = aboveBlocks.length - 1; i >= 0; i--) {
+            const b = aboveBlocks[i];
+            let destY = b.origY;
+            while (destY + 1 < ROWS && !arena[destY + 1][x]) destY++;
+            arena[destY][x] = b.type;
+            if (destY !== b.origY) {
+              moves.push({ x, fromY: b.origY, toY: destY, type: b.type, t: 0 });
+            }
+          }
+        }
+
+        return moves;
       }
-    });
-  });
-  ctx.restore();
-}
 
-function getGhostY(piece) {
-  const p = { matrix: piece.matrix, x: piece.x, y: piece.y, type: piece.type };
-  while(!collide(arena, p)) p.y++;
-  return p.y - 1;
-}
-
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
-}
-
-function drawSpawnDividerLine() {
-  ctx.save();
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([8, 6]);
-  ctx.beginPath();
-  ctx.moveTo(0, BOARD_TOP_PAD);
-  ctx.lineTo(canvas.width, BOARD_TOP_PAD);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawArenaWithGravity(gravityAnim) {
-  const skip = new Set();
-  if(gravityAnim && gravityAnim.blocks) {
-    gravityAnim.blocks.forEach(b => {
-      if(b.currentY < b.toY) skip.add(b.x + ',' + b.toY);
-    });
-  }
-  for(let y = 0; y < ROWS; y++) for(let x = 0; x < COLS; x++) {
-    const t = arena[y][x];
-    if(!t || skip.has(x + ',' + y)) continue;
-    ctx.fillStyle = COLORS[t] || '#666';
-    ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
-  }
-  if(gravityAnim && gravityAnim.blocks) {
-    gravityAnim.blocks.forEach(b => {
-      ctx.fillStyle = COLORS[b.type] || '#666';
-      ctx.fillRect(b.x * BLOCK, gridY(b.currentY), BLOCK - 1, BLOCK - 1);
-    });
-  }
-}
-
-function drawLineClearFrame(state) {
-  const rowSet = new Set(state.rows);
-  const jiggle = state.phase === 'jiggle';
-  const jx = jiggle ? Math.sin(state.elapsed * 0.045) * 6 : 0;
-  const vanishY = !jiggle ? (state.elapsed / 480) * BLOCK * 16 : 0;
-  const alpha = !jiggle ? Math.max(0, 1 - state.elapsed / 480) : 1;
-
-  for(let y = 0; y < ROWS; y++) for(let x = 0; x < COLS; x++) {
-    const t = arena[y][x];
-    if(!t) continue;
-    if(rowSet.has(y)) {
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = COLORS[t] || '#666';
-      ctx.fillRect(x * BLOCK + jx, gridY(y) + vanishY, BLOCK - 1, BLOCK - 1);
-      ctx.globalAlpha = 1;
-    } else {
-      ctx.fillStyle = COLORS[t] || '#666';
-      ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
-    }
-  }
-}
-
-function draw() {
-  ctx.fillStyle = '#061025';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  if(lineClearState) {
-    drawLineClearFrame(lineClearState);
-    drawSpawnDividerLine();
-    return;
-  }
-  if(gravityState) {
-    drawArenaWithGravity(gravityState);
-    drawSpawnDividerLine();
-    return;
-  }
-
-  drawMatrix(ctx, arena, { x: 0, y: BOARD_TOP_PAD }, COLORS);
-  if(player.matrix) {
-    drawGhost(ctx, player, getGhostY(player));
-    drawMatrix(ctx, player.matrix, { x: player.x * BLOCK, y: gridY(player.y) }, COLORS);
-  }
-  drawSpawnDividerLine();
-}
-
-function drawNext() {
-  nctx.fillStyle = '#061025';
-  nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-  if(!next.matrix) return;
-  const m = next.matrix;
-  let minX = 99, maxX = -1, minY = 99, maxY = -1;
-  for(let y = 0; y < m.length; y++) for(let x = 0; x < m[y].length; x++) {
-    if(m[y][x]) {
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-    }
-  }
-  if(maxX < 0) return;
-  const bw = maxX - minX + 1, bh = maxY - minY + 1;
-  const pad = 4;
-  const avail = Math.min(nextCanvas.width, nextCanvas.height) - pad * 2;
-  const cellSize = Math.min(BLOCK, Math.floor(avail / Math.max(bw, bh)));
-  const ox = (nextCanvas.width  - bw * cellSize) / 2 - minX * cellSize;
-  const oy = (nextCanvas.height - bh * cellSize) / 2 - minY * cellSize;
-  // Draw scaled
-  m.forEach((row, y) => row.forEach((val, x) => {
-    if(!val) return;
-    nctx.fillStyle = COLORS[val] || '#666';
-    nctx.fillRect(ox + x * cellSize + 1, oy + y * cellSize + 1, cellSize - 2, cellSize - 2);
-  }));
-}
-
-function cloneMatrix(m) {
-  return m.map(r => r.slice());
-}
-
-function playerReset() {
-  if(!next.type || !next.matrix) generateNext();
-  player.type = next.type;
-  player.matrix = cloneMatrix(next.matrix);
-  generateNext();
-  const { minX, maxX } = matrixFilledXBounds(player.matrix);
-  const center = maxX < 0 ? 0 : (minX + maxX) / 2;
-  let sx = Math.round(COLS / 2 - center);
-  const xb = playerXBounds(player.matrix);
-  player.x = Math.max(xb.min, Math.min(xb.max, sx));
-  player.y = spawnYAboveBoard(player.matrix);
-  if(collide(arena, player)) arena.forEach(row => row.fill(0));
-}
-
-function playerDrop() {
-  if(gameState !== 'playing' || !player.matrix) return;
-  player.y++;
-  if(collide(arena, player)){
-    player.y--;
-    merge(arena, player);
-    afterLockPiece();
-    updateScore();
-  }
-}
-
-function applyPlayerX(targetX) {
-  if(gameState !== 'playing' || !player.matrix) return;
-  const xb = playerXBounds(player.matrix);
-  targetX = Math.max(xb.min, Math.min(xb.max, targetX));
-  while(player.x < targetX) { player.x++; if(collide(arena, player)) { player.x--; break; } }
-  while(player.x > targetX) { player.x--; if(collide(arena, player)) { player.x++; break; } }
-}
-
-function playerMove(dir) {
-  if(gameState !== 'playing' || !player.matrix) return;
-  player.x += dir;
-  if(collide(arena, player)) player.x -= dir;
-}
-
-function playerRotate(dir) {
-  if(gameState !== 'playing' || !player.matrix) return;
-  const pos = player.x;
-  const posY = player.y;
-  player.matrix = rotate(player.matrix, dir);
-  let offset = 1;
-  while(collide(arena, player)){
-    player.x += offset;
-    offset = -(offset + (offset > 0 ? 1 : -1));
-    if(offset > player.matrix[0].length) {
-      player.matrix = rotate(player.matrix, -dir);
-      player.x = pos;
-      player.y = posY;
-      return;
-    }
-  }
-  // If still above the divider (player.y < 0), ensure no filled row reaches y >= 0.
-  // Find the lowest filled row in the matrix and shift up if needed.
-  if(player.y < 0) {
-    let maxFilledRow = -1;
-    for(let y = 0; y < player.matrix.length; y++)
-      if(player.matrix[y].some(v => v)) maxFilledRow = y;
-    const lowestY = player.y + maxFilledRow; // board row of the bottom filled cell
-    if(lowestY >= 0) player.y -= (lowestY + 1);
-  }
-}
-
-function updateScore() {
-  document.getElementById('score').textContent = player.score;
-}
-
-const RELEASE_QUICK_FALL_MS = 26;
-
-let lastTime = 0;
-
-function update(time = 0) {
-  const deltaTime = time - lastTime;
-  lastTime = time;
-
-  if(!paused) {
-    if(gameState === 'lineClear' && lineClearState) {
-      lineClearState.elapsed += deltaTime;
-      if(lineClearState.phase === 'jiggle' && lineClearState.elapsed >= 520) {
-        lineClearState.phase = 'vanish';
-        lineClearState.elapsed = 0;
-      } else if(lineClearState.phase === 'vanish' && lineClearState.elapsed >= 480) {
-        finishLineClearPhase();
+      function applyLineClearScore(rowCount) {
+        if (rowCount <= 0) return;
+        player.score += rowCount * 10;
+        player.level = Math.floor(player.score / 100);
       }
-    } else if(gameState === 'gravity' && gravityState) {
-      gravityState.blocks.forEach(b => {
-        b.currentY = Math.min(b.toY, b.currentY + gravityState.speed * deltaTime);
-      });
-      if(gravityState.blocks.every(b => b.currentY >= b.toY)) {
+
+      function finishLineClearPhase() {
+        const rows = lineClearState.rows;
+        const rowCount = rows.length;
+        for (const y of rows) for (let x = 0; x < COLS; x++) arena[y][x] = 0;
+        applyLineClearScore(rowCount);
+        updateScore();
+
+        const moves = compactRowsWithMoves(rows);
+        lineClearState = null;
+
+        if (moves.length) {
+          const GRAVITY_ROWS_PER_MS = 0.018; // rows per millisecond — tune this for feel
+          moves.forEach(b => { b.currentY = b.fromY; });
+          gravityState = { blocks: moves, speed: GRAVITY_ROWS_PER_MS };
+          gameState = 'gravity';
+        } else {
+          afterGravityChain();
+        }
+      }
+
+      function afterGravityChain() {
+        const more = findFullRows();
+        if (more.length) {
+          lineClearState = { rows: more, phase: 'jiggle', elapsed: 0 };
+          gameState = 'lineClear';
+        } else {
+          gameState = 'playing';
+          playerReset();
+        }
+      }
+
+      function afterLockPiece() {
+        releaseQuickFallActive = false;
+        releaseQuickFallTimer = 0;
+        player.matrix = null;
+        const rows = findFullRows();
+        if (rows.length) {
+          lineClearState = { rows, phase: 'jiggle', elapsed: 0 };
+          gameState = 'lineClear';
+        } else {
+          playerReset();
+        }
+      }
+
+      function collide(arena, piece) {
+        for (let y = 0; y < piece.matrix.length; y++) for (let x = 0; x < piece.matrix[y].length; x++) {
+          if (piece.matrix[y][x]) {
+            const px = piece.x + x, py = piece.y + y;
+            if (py >= ROWS || px < 0 || px >= COLS) return true;
+            if (py >= 0 && arena[py][px]) return true;
+          }
+        }
+        return false;
+      }
+
+      function merge(arena, piece) {
+        for (let y = 0; y < piece.matrix.length; y++) for (let x = 0; x < piece.matrix[y].length; x++) {
+          if (!piece.matrix[y][x] || piece.y + y < 0) continue;
+          const px = piece.x + x;
+          if (px < 0 || px >= COLS) continue;
+          arena[piece.y + y][px] = piece.type;
+        }
+      }
+
+      function rotate(matrix, dir) {
+        const m = matrix.map(r => r.slice());
+        for (let y = 0; y < m.length; ++y) for (let x = 0; x < y; ++x) {
+          [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+        }
+        if (dir > 0) m.forEach(r => r.reverse());
+        else m.reverse();
+        return m;
+      }
+
+      function drawMatrix(ctx, matrix, offset, colors) {
+        matrix.forEach((row, y) => {
+          row.forEach((value, x) => {
+            if (value) {
+              ctx.fillStyle = colors[value] || '#666';
+              ctx.fillRect(offset.x + x * BLOCK, offset.y + y * BLOCK, BLOCK - 1, BLOCK - 1);
+            }
+          });
+        });
+      }
+
+      function matrixFilledXBounds(matrix) {
+        let minX = 99, maxX = -1;
+        for (let y = 0; y < matrix.length; y++) for (let x = 0; x < matrix[y].length; x++) {
+          if (matrix[y][x]) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
+        }
+        return { minX, maxX };
+      }
+
+      function playerXBounds(matrix) {
+        const { minX, maxX } = matrixFilledXBounds(matrix);
+        if (maxX < 0) return { min: 0, max: Math.max(0, COLS - matrix[0].length) };
+        return { min: -minX, max: COLS - 1 - maxX };
+      }
+
+      function matrixBottomOffset(matrix) {
+        let maxY = 0;
+        for (let y = 0; y < matrix.length; y++) for (let x = 0; x < matrix[y].length; x++) {
+          if (matrix[y][x]) maxY = Math.max(maxY, y);
+        }
+        return maxY;
+      }
+
+      function spawnYAboveBoard(matrix) {
+        return -matrixBottomOffset(matrix) - 1;
+      }
+
+      function drawGhost(ctx, piece, ghostY) {
+        if (!piece.matrix || ghostY === player.y) return;
+        ctx.save();
+        ctx.globalAlpha = 0.48;
+        ctx.strokeStyle = COLORS[piece.type] || '#94a3b8';
+        ctx.lineWidth = 4;
+        piece.matrix.forEach((row, yy) => {
+          row.forEach((value, xx) => {
+            if (value) {
+              const px = piece.x + xx, py = ghostY + yy;
+              ctx.strokeRect(px * BLOCK + 2, gridY(py) + 2, BLOCK - 5, BLOCK - 5);
+            }
+          });
+        });
+        ctx.restore();
+      }
+
+      function getGhostY(piece) {
+        const p = { matrix: piece.matrix, x: piece.x, y: piece.y, type: piece.type };
+        while (!collide(arena, p)) p.y++;
+        return p.y - 1;
+      }
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function drawSpawnDividerLine() {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(0, BOARD_TOP_PAD);
+        ctx.lineTo(canvas.width, BOARD_TOP_PAD);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawArenaWithGravity(gravityAnim) {
+        const skip = new Set();
+        if (gravityAnim && gravityAnim.blocks) {
+          gravityAnim.blocks.forEach(b => {
+            if (b.currentY < b.toY) skip.add(b.x + ',' + b.toY);
+          });
+        }
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+          const t = arena[y][x];
+          if (!t || skip.has(x + ',' + y)) continue;
+          ctx.fillStyle = COLORS[t] || '#666';
+          ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
+        }
+        if (gravityAnim && gravityAnim.blocks) {
+          gravityAnim.blocks.forEach(b => {
+            ctx.fillStyle = COLORS[b.type] || '#666';
+            ctx.fillRect(b.x * BLOCK, gridY(b.currentY), BLOCK - 1, BLOCK - 1);
+          });
+        }
+      }
+
+      function drawLineClearFrame(state) {
+        const rowSet = new Set(state.rows);
+        const jiggle = state.phase === 'jiggle';
+        const jx = jiggle ? Math.sin(state.elapsed * 0.045) * 6 : 0;
+        const vanishY = !jiggle ? (state.elapsed / 480) * BLOCK * 16 : 0;
+        const alpha = !jiggle ? Math.max(0, 1 - state.elapsed / 480) : 1;
+
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+          const t = arena[y][x];
+          if (!t) continue;
+          if (rowSet.has(y)) {
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = COLORS[t] || '#666';
+            ctx.fillRect(x * BLOCK + jx, gridY(y) + vanishY, BLOCK - 1, BLOCK - 1);
+            ctx.globalAlpha = 1;
+          } else {
+            ctx.fillStyle = COLORS[t] || '#666';
+            ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
+          }
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = '#061025';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        if (lineClearState) {
+          drawLineClearFrame(lineClearState);
+          drawSpawnDividerLine();
+          return;
+        }
+        if (gravityState) {
+          drawArenaWithGravity(gravityState);
+          drawSpawnDividerLine();
+          return;
+        }
+
+        drawMatrix(ctx, arena, { x: 0, y: BOARD_TOP_PAD }, COLORS);
+        if (player.matrix) {
+          drawGhost(ctx, player, getGhostY(player));
+          drawMatrix(ctx, player.matrix, { x: player.x * BLOCK, y: gridY(player.y) }, COLORS);
+        }
+        drawSpawnDividerLine();
+      }
+
+      function drawNext() {
+        nctx.fillStyle = '#061025';
+        nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        if (!next.matrix) return;
+        const m = next.matrix;
+        let minX = 99, maxX = -1, minY = 99, maxY = -1;
+        for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) {
+          if (m[y][x]) {
+            minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+          }
+        }
+        if (maxX < 0) return;
+        const bw = maxX - minX + 1, bh = maxY - minY + 1;
+        const pad = 4;
+        const avail = Math.min(nextCanvas.width, nextCanvas.height) - pad * 2;
+        const cellSize = Math.min(BLOCK, Math.floor(avail / Math.max(bw, bh)));
+        const ox = (nextCanvas.width - bw * cellSize) / 2 - minX * cellSize;
+        const oy = (nextCanvas.height - bh * cellSize) / 2 - minY * cellSize;
+        // Draw scaled
+        m.forEach((row, y) => row.forEach((val, x) => {
+          if (!val) return;
+          nctx.fillStyle = COLORS[val] || '#666';
+          nctx.fillRect(ox + x * cellSize + 1, oy + y * cellSize + 1, cellSize - 2, cellSize - 2);
+        }));
+      }
+
+      function cloneMatrix(m) {
+        return m.map(r => r.slice());
+      }
+
+      function playerReset() {
+        if (!next.type || !next.matrix) generateNext();
+        player.type = next.type;
+        player.matrix = cloneMatrix(next.matrix);
+        generateNext();
+        const { minX, maxX } = matrixFilledXBounds(player.matrix);
+        const center = maxX < 0 ? 0 : (minX + maxX) / 2;
+        let sx = Math.round(COLS / 2 - center);
+        const xb = playerXBounds(player.matrix);
+        player.x = Math.max(xb.min, Math.min(xb.max, sx));
+        player.y = spawnYAboveBoard(player.matrix);
+        if (collide(arena, player)) arena.forEach(row => row.fill(0));
+      }
+
+      function playerDrop() {
+        if (gameState !== 'playing' || !player.matrix) return;
+        player.y++;
+        if (collide(arena, player)) {
+          player.y--;
+          merge(arena, player);
+          afterLockPiece();
+          updateScore();
+        }
+      }
+
+      function applyPlayerX(targetX) {
+        if (gameState !== 'playing' || !player.matrix) return;
+        const xb = playerXBounds(player.matrix);
+        targetX = Math.max(xb.min, Math.min(xb.max, targetX));
+        while (player.x < targetX) { player.x++; if (collide(arena, player)) { player.x--; break; } }
+        while (player.x > targetX) { player.x--; if (collide(arena, player)) { player.x++; break; } }
+      }
+
+      function playerMove(dir) {
+        if (gameState !== 'playing' || !player.matrix) return;
+        player.x += dir;
+        if (collide(arena, player)) player.x -= dir;
+      }
+
+      function playerRotate(dir) {
+        if (gameState !== 'playing' || !player.matrix) return;
+        const pos = player.x;
+        const posY = player.y;
+        player.matrix = rotate(player.matrix, dir);
+        let offset = 1;
+        while (collide(arena, player)) {
+          player.x += offset;
+          offset = -(offset + (offset > 0 ? 1 : -1));
+          if (offset > player.matrix[0].length) {
+            player.matrix = rotate(player.matrix, -dir);
+            player.x = pos;
+            player.y = posY;
+            return;
+          }
+        }
+        // If still above the divider (player.y < 0), ensure no filled row reaches y >= 0.
+        // Find the lowest filled row in the matrix and shift up if needed.
+        if (player.y < 0) {
+          let maxFilledRow = -1;
+          for (let y = 0; y < player.matrix.length; y++)
+            if (player.matrix[y].some(v => v)) maxFilledRow = y;
+          const lowestY = player.y + maxFilledRow; // board row of the bottom filled cell
+          if (lowestY >= 0) player.y -= (lowestY + 1);
+        }
+      }
+
+      function updateScore() {
+        document.getElementById('score').textContent = player.score;
+      }
+
+      const RELEASE_QUICK_FALL_MS = 26;
+
+      let lastTime = 0;
+
+      function update(time = 0) {
+        const deltaTime = time - lastTime;
+        lastTime = time;
+
+        if (!paused) {
+          if (gameState === 'lineClear' && lineClearState) {
+            lineClearState.elapsed += deltaTime;
+            if (lineClearState.phase === 'jiggle' && lineClearState.elapsed >= 520) {
+              lineClearState.phase = 'vanish';
+              lineClearState.elapsed = 0;
+            } else if (lineClearState.phase === 'vanish' && lineClearState.elapsed >= 480) {
+              finishLineClearPhase();
+            }
+          } else if (gameState === 'gravity' && gravityState) {
+            gravityState.blocks.forEach(b => {
+              b.currentY = Math.min(b.toY, b.currentY + gravityState.speed * deltaTime);
+            });
+            if (gravityState.blocks.every(b => b.currentY >= b.toY)) {
+              gravityState = null;
+              afterGravityChain();
+            }
+          } else if (releaseQuickFallActive && gameState === 'playing' && player.matrix) {
+            releaseQuickFallTimer += deltaTime;
+            if (releaseQuickFallTimer >= RELEASE_QUICK_FALL_MS) {
+              releaseQuickFallTimer -= RELEASE_QUICK_FALL_MS;
+              playerDrop();
+            }
+          }
+        }
+
+        draw();
+        drawNext();
+
+        if (!paused) requestAnimationFrame(update);
+      }
+
+      const player = {
+        pos: { x: 0, y: 0 },
+        matrix: null,
+        score: 0,
+        level: 0,
+        x: 0,
+        y: 0,
+        type: ''
+      };
+
+      const next = {
+        matrix: null,
+        type: ''
+      };
+
+      function generateNext() {
+        const pieces = 'TJLOSZI';
+        next.type = pieces[Math.floor(Math.random() * pieces.length)];
+        const variants = SHAPES[next.type];
+        // Pick a random starting rotation, then prefer one whose bounding-box
+        // height fits inside the preview area so it never overflows.
+        const idx = Math.floor(Math.random() * variants.length);
+        let chosen = cloneMatrix(variants[idx]);
+        // Find bounding-box height of a matrix
+        function bboxH(m) {
+          let minY = 99, maxY = -1;
+          for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++)
+            if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+          return maxY < 0 ? 0 : maxY - minY + 1;
+        }
+        if (bboxH(chosen) > BOARD_TOP_ROWS) {
+          // Try each variant and use the first one that fits
+          for (const v of variants) {
+            if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
+          }
+        }
+        next.matrix = chosen;
+      }
+
+      function startGame() {
+        arena = makeMatrix(COLS, ROWS);
+        player.score = 0;
+        player.level = 0;
+        gameState = 'playing';
+        lineClearState = null;
         gravityState = null;
-        afterGravityChain();
+        releaseQuickFallActive = false;
+        releaseQuickFallTimer = 0;
+        paused = false;
+        generateNext();
+        playerReset();
+        updateScore();
+        update();
       }
-    } else if(releaseQuickFallActive && gameState === 'playing' && player.matrix) {
-      releaseQuickFallTimer += deltaTime;
-      if(releaseQuickFallTimer >= RELEASE_QUICK_FALL_MS) {
-        releaseQuickFallTimer -= RELEASE_QUICK_FALL_MS;
-        playerDrop();
+
+      document.getElementById('restart').onclick = () => startGame();
+      document.getElementById('pause').onclick = () => {
+        paused = !paused;
+        if (!paused) update();
+        document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
+      };
+
+      document.getElementById('rotate-left').onclick = () => { playerRotate(-1); draw(); };
+      document.getElementById('rotate-right').onclick = () => { playerRotate(1); draw(); };
+
+      let paused = false;
+
+      let dragCanvasX0 = 0;
+      let dragging = false;
+
+      function canvasPointerX(e) {
+        const r = canvas.getBoundingClientRect();
+        let x = (e.clientX - r.left) * (canvas.width / r.width);
+        return Math.max(0, Math.min(canvas.width, x));
       }
-    }
-  }
 
-  draw();
-  drawNext();
+      function pointerXToTargetColumn(cx, matrix) {
+        const { minX, maxX } = matrixFilledXBounds(matrix);
+        if (maxX < 0) return 0;
+        const center = (minX + maxX) / 2;
+        let x = Math.round(cx / BLOCK - center);
+        const xb = playerXBounds(matrix);
+        return Math.max(xb.min, Math.min(xb.max, x));
+      }
 
-  if(!paused) requestAnimationFrame(update);
-}
+      canvas.addEventListener('pointerdown', e => {
+        if (paused || gameState !== 'playing' || !player.matrix) return;
+        releaseQuickFallActive = false;
+        canvas.setPointerCapture(e.pointerId);
+        const cx = canvasPointerX(e);
+        dragCanvasX0 = cx;
+        dragging = true;
+        applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
+      });
+      canvas.addEventListener('pointermove', e => {
+        if (!dragging || !player.matrix) return;
+        e.preventDefault();
+        const cx = canvasPointerX(e);
+        applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
+      }, { passive: false });
+      function endCanvasPointer(e) {
+        dragging = false;
+        if (!paused && gameState === 'playing' && player.matrix) {
+          releaseQuickFallActive = true;
+          releaseQuickFallTimer = 0;
+        }
+        try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
+      }
+      canvas.addEventListener('pointerup', endCanvasPointer);
+      canvas.addEventListener('pointercancel', endCanvasPointer);
 
-const player = {
-  pos: {x: 0, y: 0},
-  matrix: null,
-  score: 0,
-  level: 0,
-  x: 0,
-  y: 0,
-  type: ''
-};
+      document.addEventListener('keydown', event => {
+        if (event.repeat) return;
+        switch (event.key) {
+          case 'ArrowLeft': playerMove(-1); break;
+          case 'ArrowRight': playerMove(1); break;
+          case 'ArrowDown': if (gameState === 'playing' && player.matrix) playerDrop(); break;
+          case 'ArrowUp': playerRotate(1); break;
+          case 'z': case 'Z': playerRotate(-1); break;
+          case 'x': case 'X': playerRotate(1); break;
+          case ' ': // Space bar to hard drop
+            if (gameState !== 'playing' || !player.matrix) break;
+            while (!collide(arena, player)) player.y++;
+            player.y--;
+            merge(arena, player);
+            afterLockPiece();
+            updateScore();
+            break;
+          case 'p': case 'P':
+            paused = !paused;
+            if (!paused) update();
+            document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
+            break;
+        }
+        draw();
+      });
 
-const next = {
-  matrix: null,
-  type: ''
-};
+      startGame();
+    </script>
+  </body>
 
-function generateNext() {
-  const pieces = 'TJLOSZI';
-  next.type = pieces[Math.floor(Math.random() * pieces.length)];
-  const variants = SHAPES[next.type];
-  // Pick a random starting rotation, then prefer one whose bounding-box
-  // height fits inside the preview area so it never overflows.
-  const idx = Math.floor(Math.random() * variants.length);
-  let chosen = cloneMatrix(variants[idx]);
-  // Find bounding-box height of a matrix
-  function bboxH(m) {
-    let minY = 99, maxY = -1;
-    for(let y = 0; y < m.length; y++) for(let x = 0; x < m[y].length; x++)
-      if(m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-    return maxY < 0 ? 0 : maxY - minY + 1;
-  }
-  if(bboxH(chosen) > BOARD_TOP_ROWS) {
-    // Try each variant and use the first one that fits
-    for(const v of variants) {
-      if(bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
-    }
-  }
-  next.matrix = chosen;
-}
-
-function startGame(){
-  arena = makeMatrix(COLS, ROWS);
-  player.score = 0;
-  player.level = 0;
-  gameState = 'playing';
-  lineClearState = null;
-  gravityState = null;
-  releaseQuickFallActive = false;
-  releaseQuickFallTimer = 0;
-  paused = false;
-  generateNext();
-  playerReset();
-  updateScore();
-  update();
-}
-
-document.getElementById('restart').onclick = () => startGame();
-document.getElementById('pause').onclick = () => {
-  paused = !paused;
-  if(!paused) update();
-  document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
-};
-
-document.getElementById('rotate-left').onclick = () => { playerRotate(-1); draw(); };
-document.getElementById('rotate-right').onclick = () => { playerRotate(1); draw(); };
-
-let paused = false;
-
-let dragCanvasX0 = 0;
-let dragging = false;
-
-function canvasPointerX(e) {
-  const r = canvas.getBoundingClientRect();
-  let x = (e.clientX - r.left) * (canvas.width / r.width);
-  return Math.max(0, Math.min(canvas.width, x));
-}
-
-function pointerXToTargetColumn(cx, matrix) {
-  const { minX, maxX } = matrixFilledXBounds(matrix);
-  if(maxX < 0) return 0;
-  const center = (minX + maxX) / 2;
-  let x = Math.round(cx / BLOCK - center);
-  const xb = playerXBounds(matrix);
-  return Math.max(xb.min, Math.min(xb.max, x));
-}
-
-canvas.addEventListener('pointerdown', e => {
-  if(paused || gameState !== 'playing' || !player.matrix) return;
-  releaseQuickFallActive = false;
-  canvas.setPointerCapture(e.pointerId);
-  const cx = canvasPointerX(e);
-  dragCanvasX0 = cx;
-  dragging = true;
-  applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
-});
-canvas.addEventListener('pointermove', e => {
-  if(!dragging || !player.matrix) return;
-  e.preventDefault();
-  const cx = canvasPointerX(e);
-  applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
-}, { passive: false });
-function endCanvasPointer(e) {
-  dragging = false;
-  if(!paused && gameState === 'playing' && player.matrix) {
-    releaseQuickFallActive = true;
-    releaseQuickFallTimer = 0;
-  }
-  try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
-}
-canvas.addEventListener('pointerup', endCanvasPointer);
-canvas.addEventListener('pointercancel', endCanvasPointer);
-
-document.addEventListener('keydown', event => {
-  if(event.repeat) return;
-  switch(event.key){
-    case 'ArrowLeft': playerMove(-1); break;
-    case 'ArrowRight': playerMove(1); break;
-    case 'ArrowDown': if(gameState === 'playing' && player.matrix) playerDrop(); break;
-    case 'ArrowUp': playerRotate(1); break;
-    case 'z': case 'Z': playerRotate(-1); break;
-    case 'x': case 'X': playerRotate(1); break;
-    case ' ': // Space bar to hard drop
-      if(gameState !== 'playing' || !player.matrix) break;
-      while(!collide(arena, player)) player.y++;
-      player.y--;
-      merge(arena, player);
-      afterLockPiece();
-      updateScore();
-      break;
-    case 'p': case 'P':
-      paused = !paused;
-      if(!paused) update();
-      document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
-      break;
-  }
-  draw();
-});
-
-startGame();
-</script>
-</body>
 </html>
