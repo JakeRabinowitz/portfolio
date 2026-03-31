@@ -4,18 +4,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>Tetris — Playable</title>
+    <title>Tetris</title>
     <style>
       :root {
         --bg: #071026;
-        --panel: #0f1724;
         --accent: #7dd3fc;
         --muted: #94a3b8;
-        --webkit-touch-callout: none;
         -webkit-user-select: none;
-        -khtml-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
         user-select: none;
       }
 
@@ -29,9 +24,9 @@
         height: 100%;
         margin: 0;
         overflow: hidden;
-        font-family: Inter, system-ui, Segoe UI, Arial;
-        background: linear-gradient(180deg, #071024 0%, var(--bg) 100%);
-        color: #e6eef8
+        font-family: Inter, system-ui, Arial;
+        background: linear-gradient(180deg, #071024 0%, #071026 100%);
+        color: #e6eef8;
       }
 
       .container {
@@ -41,7 +36,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 8px 8px env(safe-area-inset-bottom, 8px);
-        gap: 4px
+        gap: 4px;
       }
 
       .top-hud {
@@ -49,10 +44,10 @@
         flex-wrap: nowrap;
         align-items: center;
         justify-content: center;
-        gap: 10px 16px;
+        gap: 10px 12px;
         width: 100%;
         max-width: 420px;
-        padding: 0 4px
+        padding: 0 4px;
       }
 
       .hud-stats.info {
@@ -61,16 +56,8 @@
         align-items: center;
         gap: 1px;
         text-align: center;
-        padding: 8px 14px;
-        min-width: 90px
-      }
-
-      .hud-stats .small {
-        margin-top: 6px
-      }
-
-      .hud-stats .small:first-child {
-        margin-top: 0
+        padding: 8px 12px;
+        min-width: 80px;
       }
 
       .hud-next.info {
@@ -78,47 +65,44 @@
         flex-direction: column;
         align-items: center;
         gap: 4px;
-        padding: 6px 10px
+        padding: 6px 10px;
       }
 
       .hud-actions {
         display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
         gap: 6px;
-        align-items: center
+        align-items: center;
       }
 
       .game {
         display: flex;
-        flex-direction: row;
         justify-content: center;
         align-items: center;
         flex: 1;
-        width: 100%
+        width: 100%;
       }
 
       canvas#tetris {
         background: #061025;
         touch-action: none;
         border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 4px
+        border-radius: 4px;
       }
 
       .info {
         background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px
+        border-radius: 10px;
       }
 
       .big {
         font-size: 18px;
         font-weight: 700;
-        color: var(--accent)
+        color: var(--accent);
       }
 
       .small {
         font-size: 11px;
-        color: var(--muted)
+        color: var(--muted);
       }
 
       button.btn {
@@ -127,42 +111,138 @@
         padding: 8px 14px;
         border-radius: 10px;
         color: inherit;
-        font-size: 13px
-      }
-
-      .touch-controls {
-        display: flex;
-        gap: 10px;
-        flex-wrap: nowrap;
-        justify-content: center;
-        width: 100%;
-        max-width: 420px
-      }
-
-      .touch-controls button {
-        flex: 1;
-        max-width: 180px;
-        height: 52px;
-        font-size: 22px;
-        border-radius: 14px;
-        padding: 0
+        font-size: 13px;
+        cursor: pointer;
       }
 
       .footer {
         font-size: 10px;
         color: var(--muted);
         text-align: center;
-        opacity: 0.7
+        opacity: 0.7;
       }
 
-      @media (max-height:700px) {
+      @media(max-height:700px) {
         .footer {
           display: none
         }
+      }
 
-        .touch-controls button {
-          height: 42px
+      /* ── MILESTONE OVERLAY ── */
+      #milestone-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        background: rgba(4, 8, 20, 0.88);
+        backdrop-filter: blur(6px);
+      }
+
+      #milestone-overlay.show {
+        display: flex;
+      }
+
+      .milestone-card {
+        background: linear-gradient(145deg, #0f1f3d 0%, #0a1228 100%);
+        border: 1px solid rgba(125, 211, 252, 0.25);
+        border-radius: 24px;
+        padding: 40px 48px;
+        text-align: center;
+        max-width: 340px;
+        width: 90%;
+        box-shadow: 0 0 80px rgba(125, 211, 252, 0.12), 0 20px 60px rgba(0, 0, 0, 0.6);
+        animation: cardPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      }
+
+      @keyframes cardPop {
+        from {
+          transform: scale(0.6) translateY(30px);
+          opacity: 0
         }
+
+        to {
+          transform: scale(1) translateY(0);
+          opacity: 1
+        }
+      }
+
+      .milestone-card .wow {
+        font-size: 46px;
+        font-weight: 900;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, #7dd3fc, #a78bfa, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 6px;
+        animation: shimmer 2s linear infinite;
+        background-size: 200% auto;
+      }
+
+      @keyframes shimmer {
+        from {
+          background-position: 0% center
+        }
+
+        to {
+          background-position: 200% center
+        }
+      }
+
+      .milestone-card .sub {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      .milestone-card .lines-big {
+        font-size: 64px;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+        margin: 8px 0 4px;
+      }
+
+      .milestone-card .lines-label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 18px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+      }
+
+      .milestone-card .style-badge {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-bottom: 24px;
+        background: rgba(125, 211, 252, 0.12);
+        border: 1px solid rgba(125, 211, 252, 0.3);
+        color: var(--accent);
+      }
+
+      #continue-btn {
+        background: linear-gradient(135deg, #3b82f6, #7c3aed);
+        border: none;
+        border-radius: 14px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        padding: 14px 36px;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
+        transition: transform 0.1s;
+      }
+
+      #continue-btn:active {
+        transform: scale(0.96);
       }
 
     </style>
@@ -175,65 +255,190 @@
           <div class="small">Score</div>
           <div id="score" class="big">0</div>
         </div>
+        <div class="info hud-stats">
+          <div class="small">Lines</div>
+          <div id="lines" class="big">0</div>
+        </div>
         <div class="info hud-next">
           <div class="small">Next</div>
           <canvas id="next" width="80" height="80" style="display:block"></canvas>
         </div>
         <div class="hud-actions">
           <button id="restart" class="btn">Restart</button>
-          <button id="pause" class="btn">Pause</button>
         </div>
       </div>
-
       <div class="game">
         <canvas id="tetris" width="320" height="736"></canvas>
       </div>
-
-      <div class="touch-controls" aria-hidden="false">
-        <button id="rotate-left" class="btn" aria-label="Rotate left">⟲</button>
-        <button id="rotate-right" class="btn" aria-label="Rotate right">⟳</button>
-      </div>
-
-      <div class="footer small">Drag horizontally to move, release to drop; rotate with buttons or Z / X. Tap Restart to play again.</div>
+      <div class="footer small">Drag to move · release to drop · Z/X or ↑ to rotate · Space = hard drop</div>
     </div>
+
+    <div id="milestone-overlay">
+      <div class="milestone-card">
+        <div class="wow" id="milestone-wow">INCREDIBLE!</div>
+        <div class="sub">You've cleared</div>
+        <div class="lines-big" id="milestone-lines">100</div>
+        <div class="lines-label">lines</div>
+        <div class="style-badge" id="milestone-style">New Style Unlocked</div>
+        <button id="continue-btn">Continue →</button>
+      </div>
+    </div>
+
     <script>
-      const COLS = 15, ROWS = 33;
-      const BLOCK = 32;
-      const BOARD_TOP_ROWS = 4;
-      const BOARD_TOP_PAD = BOARD_TOP_ROWS * BLOCK;
+      // ══════════════════════════════════════
+      // COLOR HELPERS
+      // ══════════════════════════════════════
+      function hexToRgb(hex) {
+        return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+      }
+      function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+      }
+      function lighten(hex, amt) { const [r, g, b] = hexToRgb(hex); return rgbToHex(r + (255 - r) * amt, g + (255 - g) * amt, b + (255 - b) * amt); }
+      function darken(hex, amt) { const [r, g, b] = hexToRgb(hex); return rgbToHex(r * (1 - amt), g * (1 - amt), b * (1 - amt)); }
+
+      // ══════════════════════════════════════
+      // BLOCK STYLES
+      // ══════════════════════════════════════
+      const BLOCK_STYLES = [
+        {
+          name: 'Classic',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            c.fillStyle = color; c.fillRect(x, y, s, s);
+            c.fillStyle = 'rgba(255,255,255,0.28)'; c.fillRect(x, y, s, 2); c.fillRect(x, y, 2, s);
+            c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x, y + s - 2, s, 2); c.fillRect(x + s - 2, y, 2, s);
+          }
+        },
+        {
+          name: 'Neon',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            c.fillStyle = '#060612'; c.fillRect(x, y, s, s);
+            c.save(); c.shadowColor = color; c.shadowBlur = 14;
+            c.strokeStyle = color; c.lineWidth = 2.5;
+            c.strokeRect(x + 1.5, y + 1.5, s - 3, s - 3);
+            c.strokeStyle = '#fff'; c.lineWidth = 0.8; c.globalAlpha = 0.5;
+            c.strokeRect(x + 3.5, y + 3.5, s - 7, s - 7);
+            c.restore();
+          }
+        },
+        {
+          name: '3D Chrome',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            const g = c.createLinearGradient(x, y, x + s, y + s);
+            g.addColorStop(0, lighten(color, 0.7)); g.addColorStop(0.35, color);
+            g.addColorStop(0.65, darken(color, 0.4)); g.addColorStop(1, darken(color, 0.75));
+            c.fillStyle = g; c.fillRect(x, y, s, s);
+            c.fillStyle = 'rgba(255,255,255,0.55)';
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + s, y); c.lineTo(x + s - 4, y + 4); c.lineTo(x + 4, y + 4); c.closePath(); c.fill();
+            c.fillStyle = 'rgba(255,255,255,0.28)';
+            c.beginPath(); c.moveTo(x, y); c.lineTo(x + 4, y + 4); c.lineTo(x + 4, y + s - 4); c.lineTo(x, y + s); c.closePath(); c.fill();
+            c.fillStyle = 'rgba(0,0,0,0.45)';
+            c.beginPath(); c.moveTo(x, y + s); c.lineTo(x + s, y + s); c.lineTo(x + s - 4, y + s - 4); c.lineTo(x + 4, y + s - 4); c.closePath(); c.fill();
+          }
+        },
+        {
+          name: 'Wood',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            const bases = ['#8B4513', '#A0522D', '#6B3410', '#7B3F00'];
+            const base = bases[Math.abs(Math.round(x / sz + y / sz)) % bases.length];
+            const g = c.createLinearGradient(x, y, x + s, y);
+            g.addColorStop(0, darken(base, 0.2)); g.addColorStop(0.15, lighten(base, 0.15));
+            g.addColorStop(0.4, base); g.addColorStop(0.6, darken(base, 0.18));
+            g.addColorStop(0.8, lighten(base, 0.1)); g.addColorStop(1, darken(base, 0.25));
+            c.fillStyle = g; c.fillRect(x, y, s, s);
+            c.fillStyle = color + '30'; c.fillRect(x, y, s, s);
+            c.strokeStyle = 'rgba(0,0,0,0.1)'; c.lineWidth = 0.7;
+            for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(x + (s / 4) * i, y); c.lineTo(x + (s / 4) * i, y + s); c.stroke(); }
+            c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(x, y, s, 2); c.fillRect(x, y, 2, s);
+            c.fillStyle = 'rgba(0,0,0,0.3)'; c.fillRect(x, y + s - 2, s, 2); c.fillRect(x + s - 2, y, 2, s);
+          }
+        },
+        {
+          name: 'Furry',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            c.fillStyle = darken(color, 0.25); c.fillRect(x, y, s, s);
+            c.save(); c.globalAlpha = 0.9; c.strokeStyle = lighten(color, 0.55); c.lineWidth = 1;
+            const tl = Math.round(sz * 0.28), step = Math.round(sz * 0.22);
+            for (let i = step; i < s - 1; i += step) {
+              c.beginPath(); c.moveTo(x + i, y); c.lineTo(x + i + 1, y + tl); c.stroke();
+              c.beginPath(); c.moveTo(x + i, y + s); c.lineTo(x + i + 1, y + s - tl); c.stroke();
+              c.beginPath(); c.moveTo(x, y + i); c.lineTo(x + tl, y + i + 1); c.stroke();
+              c.beginPath(); c.moveTo(x + s, y + i); c.lineTo(x + s - tl, y + i + 1); c.stroke();
+            }
+            c.restore();
+            const cg = c.createRadialGradient(x + s / 2, y + s / 2, 0, x + s / 2, y + s / 2, s / 2);
+            cg.addColorStop(0, lighten(color, 0.4) + 'aa'); cg.addColorStop(1, 'transparent');
+            c.fillStyle = cg; c.fillRect(x, y, s, s);
+          }
+        },
+        {
+          name: 'Glass',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            c.fillStyle = color + '55'; c.fillRect(x, y, s, s);
+            c.fillStyle = 'rgba(255,255,255,0.38)';
+            c.beginPath(); c.moveTo(x + 2, y + 2); c.lineTo(x + s * 0.6, y + 2); c.lineTo(x + 2, y + s * 0.6); c.closePath(); c.fill();
+            c.strokeStyle = 'rgba(255,255,255,0.5)'; c.lineWidth = 1;
+            c.strokeRect(x + 0.5, y + 0.5, s - 1, s - 1);
+            c.fillStyle = 'rgba(0,0,0,0.18)';
+            c.beginPath(); c.moveTo(x + s * 0.6, y + s); c.lineTo(x + s, y + s); c.lineTo(x + s, y + s * 0.6); c.closePath(); c.fill();
+          }
+        },
+        {
+          name: 'Emoji',
+          draw(c, color, x, y, sz) {
+            const s = sz - 1;
+            c.fillStyle = color; c.fillRect(x, y, s, s);
+            c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(x, y, s, 2); c.fillRect(x, y, 2, s);
+            // emoji is rendered separately after arena loop (since ctx font state is global)
+          },
+          drawEmoji(c, typeStr, x, y, sz) {
+            const emojis = { I: '🌊', J: '💎', L: '🔥', O: '⭐', S: '🍀', T: '🦄', Z: '🎯', X: '⬛' };
+            const em = emojis[typeStr] || '✨';
+            c.font = `${Math.round(sz * 0.65)}px serif`;
+            c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.fillText(em, x + sz / 2, y + sz / 2);
+          }
+        }
+      ];
+
+      let currentStyleIndex = 0;
+
+      // ══════════════════════════════════════
+      // MILESTONE MESSAGES
+      // ══════════════════════════════════════
+      const MILESTONE_MSGS = [
+        'INCREDIBLE!', 'ON FIRE! 🔥', 'UNSTOPPABLE!', 'LEGENDARY!!',
+        'ARE YOU HUMAN?!', 'TETRIS MASTER!', '🏆 CHAMPION!', 'GODLIKE!!!'
+      ];
+
+      // ══════════════════════════════════════
+      // GAME CONSTANTS
+      // ══════════════════════════════════════
+      const COLS = 15, ROWS = 33, BLOCK = 32, BOARD_TOP_ROWS = 4, BOARD_TOP_PAD = BOARD_TOP_ROWS * BLOCK;
+      const LOCK_DELAY_MS = 400, MAX_LOCK_RESETS = 15, RELEASE_QUICK_FALL_MS = 26;
 
       const canvas = document.getElementById('tetris');
       const ctx = canvas.getContext('2d');
-      canvas.width = COLS * BLOCK;
-      canvas.height = ROWS * BLOCK + BOARD_TOP_PAD;
-
-      // iPhone 17 Pro Max logical resolution: 393 x 852 (≈ 9:19.47)
-      // We fill the viewport, keeping aspect ratio, with the canvas as the centrepiece.
-      function fitCanvas() {
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-
-        // Reserve vertical space for HUD (~120px) + touch controls (~68px) + padding
-        const reservedV = 196;
-        const availH = Math.max(200, vh - reservedV);
-        const availW = Math.max(120, vw - 24);
-
-        const scaleH = availH / canvas.height;
-        const scaleW = availW / canvas.width;
-        const scale = Math.min(scaleH, scaleW);
-
-        canvas.style.width = Math.round(canvas.width * scale) + 'px';
-        canvas.style.height = Math.round(canvas.height * scale) + 'px';
-      }
-      window.addEventListener('resize', fitCanvas);
-      fitCanvas();
-
-      function gridY(y) {
-        return BOARD_TOP_PAD + y * BLOCK;
-      }
+      canvas.width = COLS * BLOCK; canvas.height = ROWS * BLOCK + BOARD_TOP_PAD;
 
       const nextCanvas = document.getElementById('next');
       const nctx = nextCanvas.getContext('2d');
+
+      function fitCanvas() {
+        const availH = Math.max(200, window.innerHeight - 196);
+        const availW = Math.max(120, window.innerWidth - 24);
+        const scale = Math.min(availH / canvas.height, availW / canvas.width);
+        canvas.style.width = Math.round(canvas.width * scale) + 'px';
+        canvas.style.height = Math.round(canvas.height * scale) + 'px';
+      }
+      window.addEventListener('resize', fitCanvas); fitCanvas();
+      function gridY(y) { return BOARD_TOP_PAD + y * BLOCK; }
 
       const COLORS = { I: '#06b6d4', J: '#6366f1', L: '#f97316', O: '#f59e0b', S: '#10b981', T: '#a78bfa', Z: '#ef4444', X: '#334155' };
       const SHAPES = {
@@ -246,15 +451,75 @@
         Z: [[[1, 1, 0], [0, 1, 1], [0, 0, 0]], [[0, 0, 1], [0, 1, 1], [0, 1, 0]]]
       };
 
-      function makeMatrix(w, h) { const m = []; for (let y = 0; y < h; y++) m.push(new Array(w).fill(0)); return m; }
+      // ══════════════════════════════════════
+      // STATE
+      // ══════════════════════════════════════
+      function makeMatrix(w, h) { const m = []; for (let y = 0; y < h; y++)m.push(new Array(w).fill(0)); return m; }
       let arena = makeMatrix(COLS, ROWS);
+      let arenaType = makeMatrix(COLS, ROWS); // stores piece type letter for emoji draw
 
-      let gameState = 'playing';
-      let lineClearState = null;
-      let gravityState = null;
-      let releaseQuickFallActive = false;
-      let releaseQuickFallTimer = 0;
+      let gameState = 'playing'; // playing|lineClear|gravity|milestone
+      let lineClearState = null, gravityState = null;
+      let releaseQuickFallActive = false, releaseQuickFallTimer = 0;
+      let lockDelayTimer = 0, lockDelayActive = false, lockDelayResets = 0;
+      let pointerHeld = false;
 
+      let totalLines = 0, nextMilestone = 100, pendingMilestone = false, milestoneStyleName = '';
+      let comboCount = 0, comboDisplay = null, screenFlash = null;
+      let particles = [], shockwaves = [], celebParticles = [];
+      let styleTransition = null; // {elapsed,duration}
+
+      const player = { matrix: null, score: 0, level: 0, x: 0, y: 0, type: '' };
+      const next = { matrix: null, type: '' };
+
+      // ══════════════════════════════════════
+      // MILESTONE
+      // ══════════════════════════════════════
+      function checkMilestone(lines) {
+        if (lines >= nextMilestone) {
+          currentStyleIndex = (currentStyleIndex + 1) % BLOCK_STYLES.length;
+          milestoneStyleName = BLOCK_STYLES[currentStyleIndex].name;
+          nextMilestone += 100; pendingMilestone = true;
+          styleTransition = { elapsed: 0, duration: 500 };
+          spawnCelebration();
+          setTimeout(showMilestoneOverlay, 800);
+        }
+      }
+      function spawnCelebration() {
+        const cols = ['#f59e0b', '#ef4444', '#a78bfa', '#06b6d4', '#10b981', '#f97316', '#fff'];
+        for (let i = 0; i < 200; i++) {
+          const angle = Math.random() * Math.PI * 2, speed = 3 + Math.random() * 9;
+          celebParticles.push({
+            x: canvas.width / 2 + (Math.random() - 0.5) * canvas.width * 0.5,
+            y: canvas.height * 0.4,
+            vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 6,
+            color: cols[Math.floor(Math.random() * cols.length)],
+            life: 1.0, decay: 0.005 + Math.random() * 0.009,
+            size: 4 + Math.random() * 8, gravity: 0.2,
+            rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.35
+          });
+        }
+      }
+      function showMilestoneOverlay() {
+        const idx = Math.floor(totalLines / 100 - 1) % MILESTONE_MSGS.length;
+        document.getElementById('milestone-wow').textContent = MILESTONE_MSGS[idx];
+        document.getElementById('milestone-lines').textContent = totalLines;
+        document.getElementById('milestone-style').textContent = '✨ New Style: ' + milestoneStyleName;
+        document.getElementById('milestone-overlay').classList.add('show');
+        gameState = 'milestone';
+      }
+      document.getElementById('continue-btn').onclick = () => {
+        document.getElementById('milestone-overlay').classList.remove('show');
+        pendingMilestone = false;
+        releaseQuickFallActive = false; releaseQuickFallTimer = 0;
+        pointerHeld = false; dragging = false;
+        lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0;
+        gameState = 'playing'; playerReset();
+      };
+
+      // ══════════════════════════════════════
+      // ARENA LOGIC
+      // ══════════════════════════════════════
       function findFullRows() {
         const rows = [];
         for (let y = 0; y < ROWS; y++) {
@@ -264,344 +529,379 @@
         }
         return rows;
       }
-
-      // True per-column gravity: after clearing rows, each column is processed
-      // independently. For each cleared row, only the blocks in that column that
-      // were strictly above it are allowed to fall. They fall freely until they
-      // land on something (bottom of board or an existing block), so they can
-      // fill gaps left by partial rows below.
       function compactRowsWithMoves(clearedRows) {
-        const sorted = clearedRows.slice().sort((a, b) => a - b); // top→bottom
-        const clearedSet = new Set(sorted);
-        const snapshot = arena.map(r => r.slice());
-
-        // Reset arena
-        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) arena[y][x] = 0;
-
+        const sorted = clearedRows.slice().sort((a, b) => a - b);
+        const cs = new Set(sorted);
+        const snap = arena.map(r => r.slice()), snapT = arenaType.map(r => r.slice());
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { arena[y][x] = 0; arenaType[y][x] = 0; }
         const moves = [];
-
         for (let x = 0; x < COLS; x++) {
-          // Split the column into two segments:
-          //   "above" = rows above the topmost cleared row (these fall freely)
-          //   "below" = rows below each cleared row that were NOT cleared (stay put)
-          //
-          // Strategy: place "below" blocks first (they don't move), then drop
-          // "above" blocks from the bottom up into remaining free cells.
-
-          const topCleared = sorted[0]; // highest (smallest index) cleared row
-
-          // Blocks at or below the topmost cleared row that survived: keep in place
-          const belowBlocks = []; // { origY, type } in top→bottom order
-          for (let y = topCleared; y < ROWS; y++) {
-            if (!clearedSet.has(y) && snapshot[y][x]) {
-              belowBlocks.push({ origY: y, type: snapshot[y][x] });
-            }
-          }
-
-          // Place below-blocks back at their original positions (they never move)
-          for (const b of belowBlocks) {
-            arena[b.origY][x] = b.type;
-          }
-
-          // Blocks strictly above the topmost cleared row: collect top→bottom
-          const aboveBlocks = [];
-          for (let y = 0; y < topCleared; y++) {
-            if (snapshot[y][x]) aboveBlocks.push({ origY: y, type: snapshot[y][x] });
-          }
-
-          // Drop each above-block from bottom to top of the above-block list.
-          // Each block falls from its original row downward until it hits a filled
-          // cell or the board bottom.
-          for (let i = aboveBlocks.length - 1; i >= 0; i--) {
-            const b = aboveBlocks[i];
-            let destY = b.origY;
-            while (destY + 1 < ROWS && !arena[destY + 1][x]) destY++;
-            arena[destY][x] = b.type;
-            if (destY !== b.origY) {
-              moves.push({ x, fromY: b.origY, toY: destY, type: b.type, t: 0 });
-            }
+          const tc = sorted[0];
+          for (let y = tc; y < ROWS; y++) if (!cs.has(y) && snap[y][x]) { arena[y][x] = snap[y][x]; arenaType[y][x] = snapT[y][x]; }
+          const above = [];
+          for (let y = 0; y < tc; y++) if (snap[y][x]) above.push({ origY: y, type: snap[y][x], tstr: snapT[y][x] });
+          for (let i = above.length - 1; i >= 0; i--) {
+            const b = above[i]; let dY = b.origY;
+            while (dY + 1 < ROWS && !arena[dY + 1][x]) dY++;
+            arena[dY][x] = b.type; arenaType[dY][x] = b.tstr;
+            if (dY !== b.origY) moves.push({ x, fromY: b.origY, toY: dY, type: b.type, tstr: b.tstr, t: 0 });
           }
         }
-
         return moves;
       }
-
-      function applyLineClearScore(rowCount) {
-        if (rowCount <= 0) return;
-        player.score += rowCount * 10;
-        player.level = Math.floor(player.score / 100);
-      }
-
+      let pendingLineCount = 0;
+      function applyLineClearScore(n) { if (n > 0) { player.score += n * 10; player.level = Math.floor(player.score / 100); } }
       function finishLineClearPhase() {
-        const rows = lineClearState.rows;
-        const rowCount = rows.length;
-        for (const y of rows) for (let x = 0; x < COLS; x++) arena[y][x] = 0;
-        applyLineClearScore(rowCount);
-        updateScore();
-
-        const moves = compactRowsWithMoves(rows);
-        lineClearState = null;
-
-        if (moves.length) {
-          const GRAVITY_ROWS_PER_MS = 0.018; // rows per millisecond — tune this for feel
-          moves.forEach(b => { b.currentY = b.fromY; });
-          gravityState = { blocks: moves, speed: GRAVITY_ROWS_PER_MS };
-          gameState = 'gravity';
-        } else {
-          afterGravityChain();
-        }
+        const rows = lineClearState.rows, n = rows.length;
+        for (const y of rows) for (let x = 0; x < COLS; x++) { arena[y][x] = 0; arenaType[y][x] = 0; }
+        applyLineClearScore(n); totalLines += n; pendingLineCount += n; updateHUD();
+        const moves = compactRowsWithMoves(rows); lineClearState = null;
+        if (moves.length) { moves.forEach(b => { b.currentY = b.fromY; }); gravityState = { blocks: moves, speed: 0.018 }; gameState = 'gravity'; }
+        else afterGravityChain();
       }
-
       function afterGravityChain() {
         const more = findFullRows();
         if (more.length) {
-          lineClearState = { rows: more, phase: 'jiggle', elapsed: 0 };
-          gameState = 'lineClear';
+          comboCount += more.length;
+          spawnParticlesForRows(more); spawnShockwaveForRows(more);
+          triggerScreenFlash(comboColor(comboCount), 200); showComboLabel(comboCount, more);
+          lineClearState = { rows: more, phase: 'jiggle', elapsed: 0 }; gameState = 'lineClear';
         } else {
-          gameState = 'playing';
-          playerReset();
+          comboCount = 0;
+          if (pendingLineCount > 0) {
+            const lc = pendingLineCount; pendingLineCount = 0;
+            checkMilestone(totalLines);
+            if (pendingMilestone) return;
+          }
+          gameState = 'playing'; playerReset();
         }
       }
-
       function afterLockPiece() {
-        releaseQuickFallActive = false;
-        releaseQuickFallTimer = 0;
+        releaseQuickFallActive = false; releaseQuickFallTimer = 0;
+        lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0;
         player.matrix = null;
         const rows = findFullRows();
         if (rows.length) {
-          lineClearState = { rows, phase: 'jiggle', elapsed: 0 };
-          gameState = 'lineClear';
-        } else {
-          playerReset();
-        }
+          comboCount = rows.length;
+          spawnParticlesForRows(rows); spawnShockwaveForRows(rows);
+          triggerScreenFlash(comboColor(comboCount), comboCount >= 4 ? 300 : 180); showComboLabel(comboCount, rows);
+          lineClearState = { rows, phase: 'jiggle', elapsed: 0 }; gameState = 'lineClear';
+        } else { comboCount = 0; playerReset(); }
       }
 
-      function collide(arena, piece) {
+      // ══════════════════════════════════════
+      // PIECE PHYSICS
+      // ══════════════════════════════════════
+      function collide(ar, piece) {
         for (let y = 0; y < piece.matrix.length; y++) for (let x = 0; x < piece.matrix[y].length; x++) {
           if (piece.matrix[y][x]) {
             const px = piece.x + x, py = piece.y + y;
             if (py >= ROWS || px < 0 || px >= COLS) return true;
-            if (py >= 0 && arena[py][px]) return true;
+            if (py >= 0 && ar[py][px]) return true;
           }
         }
         return false;
       }
-
-      function merge(arena, piece) {
+      function merge(ar, piece) {
         for (let y = 0; y < piece.matrix.length; y++) for (let x = 0; x < piece.matrix[y].length; x++) {
           if (!piece.matrix[y][x] || piece.y + y < 0) continue;
           const px = piece.x + x;
           if (px < 0 || px >= COLS) continue;
-          arena[piece.y + y][px] = piece.type;
+          ar[piece.y + y][px] = piece.type;
+          arenaType[piece.y + y][px] = piece.type;
         }
       }
-
       function rotate(matrix, dir) {
         const m = matrix.map(r => r.slice());
-        for (let y = 0; y < m.length; ++y) for (let x = 0; x < y; ++x) {
-          [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
-        }
-        if (dir > 0) m.forEach(r => r.reverse());
-        else m.reverse();
+        for (let y = 0; y < m.length; ++y) for (let x = 0; x < y; ++x) [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+        if (dir > 0) m.forEach(r => r.reverse()); else m.reverse();
         return m;
       }
+      function isPieceResting() { return collide(arena, { matrix: player.matrix, x: player.x, y: player.y + 1, type: player.type }); }
 
-      function drawMatrix(ctx, matrix, offset, colors) {
-        matrix.forEach((row, y) => {
-          row.forEach((value, x) => {
-            if (value) {
-              ctx.fillStyle = colors[value] || '#666';
-              ctx.fillRect(offset.x + x * BLOCK, offset.y + y * BLOCK, BLOCK - 1, BLOCK - 1);
-            }
-          });
-        });
+      // ══════════════════════════════════════
+      // EFFECTS
+      // ══════════════════════════════════════
+      function comboLabel(n) {
+        if (n <= 1) return null; if (n === 2) return 'DOUBLE'; if (n === 3) return 'TRIPLE';
+        if (n === 4) return 'TETRIS!'; if (n === 5) return 'PENTA!!'; return `${n}x COMBO!!!`;
       }
-
-      function matrixFilledXBounds(matrix) {
-        let minX = 99, maxX = -1;
-        for (let y = 0; y < matrix.length; y++) for (let x = 0; x < matrix[y].length; x++) {
-          if (matrix[y][x]) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
-        }
-        return { minX, maxX };
+      function comboColor(n) {
+        if (n <= 2) return '#f59e0b'; if (n <= 4) return '#f97316'; if (n <= 6) return '#ef4444'; return '#a78bfa';
       }
-
-      function playerXBounds(matrix) {
-        const { minX, maxX } = matrixFilledXBounds(matrix);
-        if (maxX < 0) return { min: 0, max: Math.max(0, COLS - matrix[0].length) };
-        return { min: -minX, max: COLS - 1 - maxX };
-      }
-
-      function matrixBottomOffset(matrix) {
-        let maxY = 0;
-        for (let y = 0; y < matrix.length; y++) for (let x = 0; x < matrix[y].length; x++) {
-          if (matrix[y][x]) maxY = Math.max(maxY, y);
-        }
-        return maxY;
-      }
-
-      function spawnYAboveBoard(matrix) {
-        return -matrixBottomOffset(matrix) - 1;
-      }
-
-      function drawGhost(ctx, piece, ghostY) {
-        if (!piece.matrix || ghostY === player.y) return;
-        ctx.save();
-        ctx.globalAlpha = 0.48;
-        ctx.strokeStyle = COLORS[piece.type] || '#94a3b8';
-        ctx.lineWidth = 4;
-        piece.matrix.forEach((row, yy) => {
-          row.forEach((value, xx) => {
-            if (value) {
-              const px = piece.x + xx, py = ghostY + yy;
-              ctx.strokeRect(px * BLOCK + 2, gridY(py) + 2, BLOCK - 5, BLOCK - 5);
-            }
-          });
-        });
-        ctx.restore();
-      }
-
-      function getGhostY(piece) {
-        const p = { matrix: piece.matrix, x: piece.x, y: piece.y, type: piece.type };
-        while (!collide(arena, p)) p.y++;
-        return p.y - 1;
-      }
-
-      function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-      }
-
-      function drawSpawnDividerLine() {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([8, 6]);
-        ctx.beginPath();
-        ctx.moveTo(0, BOARD_TOP_PAD);
-        ctx.lineTo(canvas.width, BOARD_TOP_PAD);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      function drawArenaWithGravity(gravityAnim) {
-        const skip = new Set();
-        if (gravityAnim && gravityAnim.blocks) {
-          gravityAnim.blocks.forEach(b => {
-            if (b.currentY < b.toY) skip.add(b.x + ',' + b.toY);
-          });
-        }
-        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-          const t = arena[y][x];
-          if (!t || skip.has(x + ',' + y)) continue;
-          ctx.fillStyle = COLORS[t] || '#666';
-          ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
-        }
-        if (gravityAnim && gravityAnim.blocks) {
-          gravityAnim.blocks.forEach(b => {
-            ctx.fillStyle = COLORS[b.type] || '#666';
-            ctx.fillRect(b.x * BLOCK, gridY(b.currentY), BLOCK - 1, BLOCK - 1);
-          });
-        }
-      }
-
-      function drawLineClearFrame(state) {
-        const rowSet = new Set(state.rows);
-        const jiggle = state.phase === 'jiggle';
-        const jx = jiggle ? Math.sin(state.elapsed * 0.045) * 6 : 0;
-        const vanishY = !jiggle ? (state.elapsed / 480) * BLOCK * 16 : 0;
-        const alpha = !jiggle ? Math.max(0, 1 - state.elapsed / 480) : 1;
-
-        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-          const t = arena[y][x];
-          if (!t) continue;
-          if (rowSet.has(y)) {
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = COLORS[t] || '#666';
-            ctx.fillRect(x * BLOCK + jx, gridY(y) + vanishY, BLOCK - 1, BLOCK - 1);
-            ctx.globalAlpha = 1;
-          } else {
-            ctx.fillStyle = COLORS[t] || '#666';
-            ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1);
+      function spawnParticlesForRows(rows) {
+        const cols = ['#06b6d4', '#f59e0b', '#10b981', '#f97316', '#ef4444', '#a78bfa', '#fff'];
+        for (const ry of rows) for (let x = 0; x < COLS; x++) {
+          const color = COLORS[arena[ry][x]] || cols[Math.floor(Math.random() * cols.length)];
+          const cx = x * BLOCK + BLOCK / 2, cy = gridY(ry) + BLOCK / 2;
+          for (let i = 0; i < 7 + Math.floor(Math.random() * 4); i++) {
+            const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 5;
+            particles.push({
+              x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2,
+              color, life: 1.0, decay: 0.012 + Math.random() * 0.016, size: 3 + Math.random() * 5, gravity: 0.12
+            });
           }
         }
+      }
+      function spawnShockwaveForRows(rows) {
+        for (const ry of rows)
+          shockwaves.push({ x: canvas.width / 2, y: gridY(ry) + BLOCK / 2, r: 0, maxR: canvas.width * 0.85, elapsed: 0, duration: 400 });
+      }
+      function triggerScreenFlash(color, duration) { screenFlash = { elapsed: 0, duration, color }; }
+      function showComboLabel(n, rows) {
+        const label = comboLabel(n); if (!label) return;
+        const midRow = rows[Math.floor(rows.length / 2)];
+        comboDisplay = { text: label, x: canvas.width / 2, y: gridY(midRow) + BLOCK / 2, elapsed: 0, duration: 1400, color: comboColor(n) };
+      }
+
+      // ══════════════════════════════════════
+      // DRAWING
+      // ══════════════════════════════════════
+      function drawBlock(c, color, px, py, tstr, sz) {
+        sz = sz || BLOCK;
+        const style = BLOCK_STYLES[currentStyleIndex];
+        if (styleTransition) {
+          const t = Math.min(1, styleTransition.elapsed / styleTransition.duration);
+          if (t < 1) {
+            const prev = BLOCK_STYLES[(currentStyleIndex - 1 + BLOCK_STYLES.length) % BLOCK_STYLES.length];
+            c.save(); c.globalAlpha = 1 - t; prev.draw(c, color, px, py, sz); c.restore();
+            c.save(); c.globalAlpha = t; style.draw(c, color, px, py, sz); c.restore();
+            if (style.drawEmoji && t > 0.5) { c.save(); c.globalAlpha = (t - 0.5) * 2; style.drawEmoji(c, tstr, px, py, sz); c.restore(); }
+            return;
+          }
+        }
+        style.draw(c, color, px, py, sz);
+        if (style.drawEmoji) style.drawEmoji(c, tstr, px, py, sz);
+      }
+
+      function drawArena() {
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+          const t = arena[y][x]; if (!t) continue;
+          drawBlock(ctx, COLORS[t] || '#666', x * BLOCK, gridY(y), arenaType[y][x]);
+        }
+      }
+
+      function matrixFilledXBounds(m) {
+        let minX = 99, maxX = -1;
+        for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) if (m[y][x]) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
+        return { minX, maxX };
+      }
+      function playerXBounds(m) {
+        const { minX, maxX } = matrixFilledXBounds(m);
+        if (maxX < 0) return { min: 0, max: Math.max(0, COLS - m[0].length) };
+        return { min: -minX, max: COLS - 1 - maxX };
+      }
+      function matrixBottomOffset(m) {
+        let maxY = 0;
+        for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) if (m[y][x]) maxY = Math.max(maxY, y);
+        return maxY;
+      }
+      function spawnYAboveBoard(m) { return -matrixBottomOffset(m) - 1; }
+
+      function drawGhost(piece, ghostY) {
+        if (!piece.matrix || ghostY === player.y) return;
+        ctx.save(); ctx.globalAlpha = 0.38;
+        ctx.strokeStyle = COLORS[piece.type] || '#94a3b8'; ctx.lineWidth = 3;
+        piece.matrix.forEach((row, yy) => row.forEach((v, xx) => {
+          if (v) { const px = piece.x + xx, py = ghostY + yy; ctx.strokeRect(px * BLOCK + 2, gridY(py) + 2, BLOCK - 5, BLOCK - 5); }
+        }));
+        ctx.restore();
+      }
+      function getGhostY(piece) {
+        const p = { matrix: piece.matrix, x: piece.x, y: piece.y, type: piece.type };
+        while (!collide(arena, p)) p.y++; return p.y - 1;
+      }
+      function drawSpawnDivider() {
+        ctx.save(); ctx.strokeStyle = 'rgba(148,163,184,0.7)'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+        ctx.beginPath(); ctx.moveTo(0, BOARD_TOP_PAD); ctx.lineTo(canvas.width, BOARD_TOP_PAD);
+        ctx.stroke(); ctx.restore();
+      }
+      function drawArenaWithGravity(grav) {
+        const skip = new Set();
+        if (grav) grav.blocks.forEach(b => { if (b.currentY < b.toY) skip.add(b.x + ',' + b.toY); });
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+          const t = arena[y][x]; if (!t || skip.has(x + ',' + y)) continue;
+          drawBlock(ctx, COLORS[t] || '#666', x * BLOCK, gridY(y), arenaType[y][x]);
+        }
+        if (grav) grav.blocks.forEach(b => {
+          drawBlock(ctx, COLORS[b.type] || '#666', b.x * BLOCK, gridY(b.currentY), b.tstr);
+        });
+      }
+      function drawLineClearFrame(state) {
+        const rowSet = new Set(state.rows), jiggle = state.phase === 'jiggle';
+        const t = state.elapsed / (jiggle ? 520 : 480);
+        if (jiggle) {
+          const shake = Math.sin(state.elapsed * 0.06) * 3 * (1 - t);
+          for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+            const val = arena[y][x]; if (!val) continue;
+            if (rowSet.has(y)) {
+              drawBlock(ctx, COLORS[val] || '#666', x * BLOCK, gridY(y), arenaType[y][x]);
+              ctx.globalAlpha = Math.abs(Math.sin(state.elapsed * 0.035)) * 0.85;
+              ctx.fillStyle = '#ffffff'; ctx.fillRect(x * BLOCK, gridY(y), BLOCK - 1, BLOCK - 1); ctx.globalAlpha = 1;
+            } else {
+              ctx.save(); ctx.translate(shake, 0);
+              drawBlock(ctx, COLORS[val] || '#666', x * BLOCK, gridY(y), arenaType[y][x]);
+              ctx.restore();
+            }
+          }
+          for (const ry of state.rows) {
+            const sweepX = (state.elapsed / 520) * canvas.width * 2 - canvas.width * 0.5;
+            ctx.save();
+            const g = ctx.createLinearGradient(sweepX - 80, 0, sweepX + 80, 0);
+            g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.7)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = g; ctx.fillRect(0, gridY(ry), canvas.width, BLOCK - 1); ctx.restore();
+          }
+        } else {
+          for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+            const val = arena[y][x]; if (!val) continue;
+            if (rowSet.has(y)) {
+              const alpha = Math.max(0, 1 - t * 1.2), scaleX = 1 - t;
+              ctx.save(); ctx.globalAlpha = alpha;
+              const cx2 = x * BLOCK + (BLOCK - 1) / 2, w = (BLOCK - 1) * scaleX;
+              ctx.shadowColor = COLORS[val] || '#fff'; ctx.shadowBlur = 12 * (1 - t);
+              ctx.fillStyle = COLORS[val] || '#666'; ctx.fillRect(cx2 - w / 2, gridY(y), w, BLOCK - 1); ctx.restore();
+            } else {
+              drawBlock(ctx, COLORS[val] || '#666', x * BLOCK, gridY(y), arenaType[y][x]);
+            }
+          }
+        }
+      }
+      function drawParticles() {
+        for (const p of particles) {
+          ctx.save(); ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+          ctx.shadowColor = p.color; ctx.shadowBlur = 6;
+          ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size); ctx.restore();
+        }
+      }
+      function drawCelebParticles() {
+        for (const p of celebParticles) {
+          ctx.save(); ctx.globalAlpha = p.life; ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.shadowColor = p.color; ctx.shadowBlur = 8;
+          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.45); ctx.restore();
+        }
+      }
+      function drawShockwaves() {
+        for (const sw of shockwaves) {
+          const t = sw.elapsed / sw.duration;
+          ctx.save(); ctx.globalAlpha = Math.max(0, 1 - t) * 0.55;
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * (1 - t) + 1;
+          ctx.beginPath(); ctx.ellipse(sw.x, sw.y, sw.r, sw.r * 0.22, 0, 0, Math.PI * 2);
+          ctx.stroke(); ctx.restore();
+        }
+      }
+      function drawScreenFlash() {
+        if (!screenFlash) return;
+        const t = screenFlash.elapsed / screenFlash.duration;
+        ctx.save(); ctx.globalAlpha = Math.max(0, (1 - t) * 0.35);
+        ctx.fillStyle = screenFlash.color; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore();
+      }
+      function drawComboDisplay() {
+        if (!comboDisplay) return;
+        const t = comboDisplay.elapsed / comboDisplay.duration;
+        let alpha, scale;
+        if (t < 0.12) { const e = 1 - Math.pow(1 - t / 0.12, 3); scale = e * 1.15; alpha = e; }
+        else if (t < 0.7) { scale = 1 + Math.sin((t - 0.12) * 8) * 0.03; alpha = 1; }
+        else { const ft = (t - 0.7) / 0.3; scale = 1 - ft * 0.1; alpha = 1 - ft; }
+        const yOff = t > 0.12 ? -(t - 0.12) * 60 : 0;
+        ctx.save(); ctx.globalAlpha = Math.max(0, alpha);
+        ctx.translate(comboDisplay.x, comboDisplay.y + yOff);
+        ctx.scale(scale, scale);
+        ctx.font = '900 36px Inter,system-ui,sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = comboDisplay.color;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = comboDisplay.color;
+        ctx.lineWidth = 12;
+        ctx.strokeText(comboDisplay.text, 0, 0);
+        ctx.fillText(comboDisplay.text, 0, 0);
+        ctx.restore();
+      }
+      function drawStyleFlash() {
+        if (!styleTransition) return;
+        const t = styleTransition.elapsed / styleTransition.duration;
+        if (t > 0.25) return;
+        ctx.save(); ctx.globalAlpha = (0.25 - t) / 0.25 * 0.65;
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.restore();
       }
 
       function draw() {
-        ctx.fillStyle = '#061025';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        if (lineClearState) {
-          drawLineClearFrame(lineClearState);
-          drawSpawnDividerLine();
-          return;
+        ctx.fillStyle = '#061025'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        if (lineClearState) drawLineClearFrame(lineClearState);
+        else if (gravityState) drawArenaWithGravity(gravityState);
+        else {
+          drawArena();
+          if (player.matrix) {
+            drawGhost(player, getGhostY(player));
+            player.matrix.forEach((row, y) => row.forEach((v, x) => {
+              if (v) drawBlock(ctx, COLORS[player.type] || '#666', (player.x + x) * BLOCK, gridY(player.y + y), player.type);
+            }));
+          }
         }
-        if (gravityState) {
-          drawArenaWithGravity(gravityState);
-          drawSpawnDividerLine();
-          return;
-        }
-
-        drawMatrix(ctx, arena, { x: 0, y: BOARD_TOP_PAD }, COLORS);
-        if (player.matrix) {
-          drawGhost(ctx, player, getGhostY(player));
-          drawMatrix(ctx, player.matrix, { x: player.x * BLOCK, y: gridY(player.y) }, COLORS);
-        }
-        drawSpawnDividerLine();
+        drawSpawnDivider();
+        drawStyleFlash();
+        drawShockwaves(); drawParticles(); drawCelebParticles();
+        drawScreenFlash(); drawComboDisplay();
       }
-
       function drawNext() {
-        nctx.fillStyle = '#061025';
-        nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+        nctx.fillStyle = '#061025'; nctx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
         if (!next.matrix) return;
         const m = next.matrix;
         let minX = 99, maxX = -1, minY = 99, maxY = -1;
-        for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) {
-          if (m[y][x]) {
-            minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-            minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-          }
+        for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++) if (m[y][x]) {
+          minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
         }
         if (maxX < 0) return;
         const bw = maxX - minX + 1, bh = maxY - minY + 1;
-        const pad = 4;
-        const avail = Math.min(nextCanvas.width, nextCanvas.height) - pad * 2;
-        const cellSize = Math.min(BLOCK, Math.floor(avail / Math.max(bw, bh)));
-        const ox = (nextCanvas.width - bw * cellSize) / 2 - minX * cellSize;
-        const oy = (nextCanvas.height - bh * cellSize) / 2 - minY * cellSize;
-        // Draw scaled
+        const csz = Math.min(BLOCK, Math.floor((Math.min(nextCanvas.width, nextCanvas.height) - 8) / Math.max(bw, bh)));
+        const ox = (nextCanvas.width - bw * csz) / 2 - minX * csz, oy = (nextCanvas.height - bh * csz) / 2 - minY * csz;
         m.forEach((row, y) => row.forEach((val, x) => {
           if (!val) return;
-          nctx.fillStyle = COLORS[val] || '#666';
-          nctx.fillRect(ox + x * cellSize + 1, oy + y * cellSize + 1, cellSize - 2, cellSize - 2);
+          const px = ox + x * csz, py = oy + y * csz;
+          nctx.fillStyle = COLORS[val] || '#666'; nctx.fillRect(px + 1, py + 1, csz - 2, csz - 2);
+          nctx.fillStyle = 'rgba(255,255,255,0.22)'; nctx.fillRect(px + 1, py + 1, csz - 2, 2); nctx.fillRect(px + 1, py + 1, 2, csz - 2);
         }));
       }
 
-      function cloneMatrix(m) {
-        return m.map(r => r.slice());
+      // ══════════════════════════════════════
+      // PLAYER ACTIONS
+      // ══════════════════════════════════════
+      function cloneMatrix(m) { return m.map(r => r.slice()); }
+
+      function generateNext() {
+        const pieces = 'TJLOSZI';
+        next.type = pieces[Math.floor(Math.random() * pieces.length)];
+        const variants = SHAPES[next.type];
+        let chosen = cloneMatrix(variants[Math.floor(Math.random() * variants.length)]);
+        function bboxH(m) { let minY = 99, maxY = -1; for (let y = 0; y < m.length; y++)for (let x = 0; x < m[y].length; x++)if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); } return maxY < 0 ? 0 : maxY - minY + 1; }
+        if (bboxH(chosen) > BOARD_TOP_ROWS) for (const v of variants) if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
+        next.matrix = chosen;
       }
 
       function playerReset() {
         if (!next.type || !next.matrix) generateNext();
-        player.type = next.type;
-        player.matrix = cloneMatrix(next.matrix);
-        generateNext();
+        player.type = next.type; player.matrix = cloneMatrix(next.matrix); generateNext();
         const { minX, maxX } = matrixFilledXBounds(player.matrix);
         const center = maxX < 0 ? 0 : (minX + maxX) / 2;
-        let sx = Math.round(COLS / 2 - center);
         const xb = playerXBounds(player.matrix);
-        player.x = Math.max(xb.min, Math.min(xb.max, sx));
+        player.x = Math.max(xb.min, Math.min(xb.max, Math.round(COLS / 2 - center)));
         player.y = spawnYAboveBoard(player.matrix);
+        lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0;
         if (collide(arena, player)) arena.forEach(row => row.fill(0));
       }
 
       function playerDrop() {
         if (gameState !== 'playing' || !player.matrix) return;
         player.y++;
-        if (collide(arena, player)) {
-          player.y--;
-          merge(arena, player);
-          afterLockPiece();
-          updateScore();
-        }
+        if (collide(arena, player)) { player.y--; } // don't lock here — lock delay handles it
+        else { lockDelayActive = false; lockDelayTimer = 0; }
+      }
+
+      function lockPieceNow() {
+        if (!player.matrix) return;
+        merge(arena, player); afterLockPiece(); updateHUD();
       }
 
       function applyPlayerX(targetX) {
@@ -610,196 +910,133 @@
         targetX = Math.max(xb.min, Math.min(xb.max, targetX));
         while (player.x < targetX) { player.x++; if (collide(arena, player)) { player.x--; break; } }
         while (player.x > targetX) { player.x--; if (collide(arena, player)) { player.x++; break; } }
+        if (lockDelayActive && lockDelayResets < MAX_LOCK_RESETS) { lockDelayTimer = 0; lockDelayResets++; }
       }
-
       function playerMove(dir) {
         if (gameState !== 'playing' || !player.matrix) return;
         player.x += dir;
         if (collide(arena, player)) player.x -= dir;
+        else if (lockDelayActive && lockDelayResets < MAX_LOCK_RESETS) { lockDelayTimer = 0; lockDelayResets++; }
       }
-
       function playerRotate(dir) {
         if (gameState !== 'playing' || !player.matrix) return;
-        const pos = player.x;
-        const posY = player.y;
+        const pos = player.x, posY = player.y;
         player.matrix = rotate(player.matrix, dir);
         let offset = 1;
         while (collide(arena, player)) {
-          player.x += offset;
-          offset = -(offset + (offset > 0 ? 1 : -1));
-          if (offset > player.matrix[0].length) {
-            player.matrix = rotate(player.matrix, -dir);
-            player.x = pos;
-            player.y = posY;
-            return;
-          }
+          player.x += offset; offset = -(offset + (offset > 0 ? 1 : -1));
+          if (offset > player.matrix[0].length) { player.matrix = rotate(player.matrix, -dir); player.x = pos; player.y = posY; return; }
         }
-        // If still above the divider (player.y < 0), ensure no filled row reaches y >= 0.
-        // Find the lowest filled row in the matrix and shift up if needed.
         if (player.y < 0) {
-          let maxFilledRow = -1;
-          for (let y = 0; y < player.matrix.length; y++)
-            if (player.matrix[y].some(v => v)) maxFilledRow = y;
-          const lowestY = player.y + maxFilledRow; // board row of the bottom filled cell
-          if (lowestY >= 0) player.y -= (lowestY + 1);
+          let mfr = -1;
+          for (let y = 0; y < player.matrix.length; y++) if (player.matrix[y].some(v => v)) mfr = y;
+          const ly = player.y + mfr; if (ly >= 0) player.y -= (ly + 1);
         }
+        if (lockDelayActive && lockDelayResets < MAX_LOCK_RESETS) { lockDelayTimer = 0; lockDelayResets++; }
       }
-
-      function updateScore() {
+      function updateHUD() {
         document.getElementById('score').textContent = player.score;
+        document.getElementById('lines').textContent = totalLines;
       }
 
-      const RELEASE_QUICK_FALL_MS = 26;
-
+      // ══════════════════════════════════════
+      // MAIN LOOP
+      // ══════════════════════════════════════
       let lastTime = 0;
-
       function update(time = 0) {
-        const deltaTime = time - lastTime;
-        lastTime = time;
+        const dt = Math.min(time - lastTime, 100); lastTime = time;
 
-        if (!paused) {
-          if (gameState === 'lineClear' && lineClearState) {
-            lineClearState.elapsed += deltaTime;
-            if (lineClearState.phase === 'jiggle' && lineClearState.elapsed >= 520) {
-              lineClearState.phase = 'vanish';
-              lineClearState.elapsed = 0;
-            } else if (lineClearState.phase === 'vanish' && lineClearState.elapsed >= 480) {
-              finishLineClearPhase();
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.life -= p.decay; p.size *= 0.985;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+        for (let i = celebParticles.length - 1; i >= 0; i--) {
+          const p = celebParticles[i]; p.x += p.vx; p.y += p.vy; p.vy += p.gravity; p.rot += p.rotV; p.life -= p.decay;
+          if (p.life <= 0) celebParticles.splice(i, 1);
+        }
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+          const sw = shockwaves[i]; sw.elapsed += dt; sw.r = (sw.elapsed / sw.duration) * sw.maxR;
+          if (sw.elapsed >= sw.duration) shockwaves.splice(i, 1);
+        }
+        if (screenFlash) { screenFlash.elapsed += dt; if (screenFlash.elapsed >= screenFlash.duration) screenFlash = null; }
+        if (comboDisplay) { comboDisplay.elapsed += dt; if (comboDisplay.elapsed >= comboDisplay.duration) comboDisplay = null; }
+        if (styleTransition) { styleTransition.elapsed += dt; if (styleTransition.elapsed >= styleTransition.duration) styleTransition = null; }
+
+        if (gameState === 'lineClear' && lineClearState) {
+          lineClearState.elapsed += dt;
+          if (lineClearState.phase === 'jiggle' && lineClearState.elapsed >= 520) { lineClearState.phase = 'vanish'; lineClearState.elapsed = 0; }
+          else if (lineClearState.phase === 'vanish' && lineClearState.elapsed >= 480) finishLineClearPhase();
+        } else if (gameState === 'gravity' && gravityState) {
+          gravityState.blocks.forEach(b => { b.currentY = Math.min(b.toY, b.currentY + gravityState.speed * dt); });
+          if (gravityState.blocks.every(b => b.currentY >= b.toY)) { gravityState = null; afterGravityChain(); }
+        } else if (gameState === 'playing' && player.matrix) {
+          const resting = isPieceResting();
+          if (resting) {
+            if (!lockDelayActive) { lockDelayActive = true; lockDelayTimer = 0; }
+            if (!pointerHeld) {
+              lockDelayTimer += dt;
+              if (lockDelayTimer >= LOCK_DELAY_MS) lockPieceNow();
             }
-          } else if (gameState === 'gravity' && gravityState) {
-            gravityState.blocks.forEach(b => {
-              b.currentY = Math.min(b.toY, b.currentY + gravityState.speed * deltaTime);
-            });
-            if (gravityState.blocks.every(b => b.currentY >= b.toY)) {
-              gravityState = null;
-              afterGravityChain();
-            }
-          } else if (releaseQuickFallActive && gameState === 'playing' && player.matrix) {
-            releaseQuickFallTimer += deltaTime;
-            if (releaseQuickFallTimer >= RELEASE_QUICK_FALL_MS) {
-              releaseQuickFallTimer -= RELEASE_QUICK_FALL_MS;
-              playerDrop();
-            }
+          } else { lockDelayActive = false; lockDelayTimer = 0; }
+          if (releaseQuickFallActive) {
+            releaseQuickFallTimer += dt;
+            if (releaseQuickFallTimer >= RELEASE_QUICK_FALL_MS) { releaseQuickFallTimer -= RELEASE_QUICK_FALL_MS; playerDrop(); }
           }
         }
 
-        draw();
-        drawNext();
-
-        if (!paused) requestAnimationFrame(update);
+        draw(); drawNext();
+        requestAnimationFrame(update);
       }
 
-      const player = {
-        pos: { x: 0, y: 0 },
-        matrix: null,
-        score: 0,
-        level: 0,
-        x: 0,
-        y: 0,
-        type: ''
-      };
-
-      const next = {
-        matrix: null,
-        type: ''
-      };
-
-      function generateNext() {
-        const pieces = 'TJLOSZI';
-        next.type = pieces[Math.floor(Math.random() * pieces.length)];
-        const variants = SHAPES[next.type];
-        // Pick a random starting rotation, then prefer one whose bounding-box
-        // height fits inside the preview area so it never overflows.
-        const idx = Math.floor(Math.random() * variants.length);
-        let chosen = cloneMatrix(variants[idx]);
-        // Find bounding-box height of a matrix
-        function bboxH(m) {
-          let minY = 99, maxY = -1;
-          for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++)
-            if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-          return maxY < 0 ? 0 : maxY - minY + 1;
-        }
-        if (bboxH(chosen) > BOARD_TOP_ROWS) {
-          // Try each variant and use the first one that fits
-          for (const v of variants) {
-            if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
-          }
-        }
-        next.matrix = chosen;
-      }
-
+      // ══════════════════════════════════════
+      // INIT
+      // ══════════════════════════════════════
       function startGame() {
-        arena = makeMatrix(COLS, ROWS);
-        player.score = 0;
-        player.level = 0;
-        gameState = 'playing';
-        lineClearState = null;
-        gravityState = null;
-        releaseQuickFallActive = false;
-        releaseQuickFallTimer = 0;
-        paused = false;
-        generateNext();
-        playerReset();
-        updateScore();
-        update();
+        arena = makeMatrix(COLS, ROWS); arenaType = makeMatrix(COLS, ROWS);
+        player.score = 0; player.level = 0; totalLines = 0; nextMilestone = 100; pendingMilestone = false;
+        gameState = 'playing'; lineClearState = null; gravityState = null;
+        releaseQuickFallActive = false; releaseQuickFallTimer = 0;
+        lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0; pointerHeld = false;
+        comboCount = 0; comboDisplay = null; screenFlash = null; styleTransition = null;
+        particles = []; shockwaves = []; celebParticles = []; currentStyleIndex = 0; pendingLineCount = 0;
+        document.getElementById('milestone-overlay').classList.remove('show');
+        generateNext(); playerReset(); updateHUD(); update();
       }
-
       document.getElementById('restart').onclick = () => startGame();
-      document.getElementById('pause').onclick = () => {
-        paused = !paused;
-        if (!paused) update();
-        document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
-      };
 
-      document.getElementById('rotate-left').onclick = () => { playerRotate(-1); draw(); };
-      document.getElementById('rotate-right').onclick = () => { playerRotate(1); draw(); };
-
-      let paused = false;
-
-      let dragCanvasX0 = 0;
+      // ══════════════════════════════════════
+      // INPUT
+      // ══════════════════════════════════════
       let dragging = false;
-
       function canvasPointerX(e) {
         const r = canvas.getBoundingClientRect();
-        let x = (e.clientX - r.left) * (canvas.width / r.width);
-        return Math.max(0, Math.min(canvas.width, x));
+        return Math.max(0, Math.min(canvas.width, (e.clientX - r.left) * (canvas.width / r.width)));
       }
-
       function pointerXToTargetColumn(cx, matrix) {
         const { minX, maxX } = matrixFilledXBounds(matrix);
         if (maxX < 0) return 0;
         const center = (minX + maxX) / 2;
-        let x = Math.round(cx / BLOCK - center);
         const xb = playerXBounds(matrix);
-        return Math.max(xb.min, Math.min(xb.max, x));
+        return Math.max(xb.min, Math.min(xb.max, Math.round(cx / BLOCK - center)));
       }
-
       canvas.addEventListener('pointerdown', e => {
-        if (paused || gameState !== 'playing' || !player.matrix) return;
-        releaseQuickFallActive = false;
-        canvas.setPointerCapture(e.pointerId);
-        const cx = canvasPointerX(e);
-        dragCanvasX0 = cx;
-        dragging = true;
-        applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
+        if (gameState !== 'playing' || !player.matrix) return;
+        releaseQuickFallActive = false; pointerHeld = true;
+        canvas.setPointerCapture(e.pointerId); dragging = true;
+        applyPlayerX(pointerXToTargetColumn(canvasPointerX(e), player.matrix));
       });
       canvas.addEventListener('pointermove', e => {
         if (!dragging || !player.matrix) return;
         e.preventDefault();
-        const cx = canvasPointerX(e);
-        applyPlayerX(pointerXToTargetColumn(cx, player.matrix));
+        applyPlayerX(pointerXToTargetColumn(canvasPointerX(e), player.matrix));
       }, { passive: false });
       function endCanvasPointer(e) {
-        dragging = false;
-        if (!paused && gameState === 'playing' && player.matrix) {
-          releaseQuickFallActive = true;
-          releaseQuickFallTimer = 0;
-        }
+        dragging = false; pointerHeld = false;
+        if (gameState === 'playing' && player.matrix) { releaseQuickFallActive = true; releaseQuickFallTimer = 0; }
         try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
       }
       canvas.addEventListener('pointerup', endCanvasPointer);
       canvas.addEventListener('pointercancel', endCanvasPointer);
-
       document.addEventListener('keydown', event => {
         if (event.repeat) return;
         switch (event.key) {
@@ -809,19 +1046,18 @@
           case 'ArrowUp': playerRotate(1); break;
           case 'z': case 'Z': playerRotate(-1); break;
           case 'x': case 'X': playerRotate(1); break;
-          case ' ': // Space bar to hard drop
+          case 'c': case 'C': {
+            for (var y = arena.length - 1; y > 7; y--) {
+              for (var x = 0; x < arena[0].length; x++) {
+                arena[y][x] = 'T';
+              }
+            }
+            break;
+          }
+          case ' ':
             if (gameState !== 'playing' || !player.matrix) break;
-            while (!collide(arena, player)) player.y++;
-            player.y--;
-            merge(arena, player);
-            afterLockPiece();
-            updateScore();
-            break;
-          case 'p': case 'P':
-            paused = !paused;
-            if (!paused) update();
-            document.getElementById('pause').textContent = paused ? 'Resume' : 'Pause';
-            break;
+            while (!collide(arena, player)) player.y++; player.y--;
+            lockPieceNow(); break;
         }
         draw();
       });
