@@ -300,6 +300,25 @@
       // ══════════════════════════════════════
       // BLOCK STYLES
       // ══════════════════════════════════════
+      function shuffleExceptFirst(array) {
+        const shuffleMe = array.slice(1);
+        let currentIndex = shuffleMe.length;
+
+        // While there remain elements to shuffle...
+        while (currentIndex != 0) {
+          // Pick a remaining element...
+          let randomIndex = Math.floor(Math.random() * currentIndex);
+          currentIndex--;
+
+          // And swap it with the current element.
+          [shuffleMe[currentIndex], shuffleMe[randomIndex]] = [
+            shuffleMe[randomIndex], shuffleMe[currentIndex]];
+        }
+
+        shuffleMe.forEach((style, shuffleMeIndex) => {
+          array[shuffleMeIndex + 1] = style;
+        });
+      }
       const BLOCK_STYLES = [
         {
           name: 'Classic',
@@ -393,19 +412,29 @@
           name: 'Emoji',
           draw(c, color, x, y, sz) {
             const s = sz - 1;
-            c.fillStyle = color; c.fillRect(x, y, s, s);
-            c.fillStyle = 'rgba(255,255,255,0.15)'; c.fillRect(x, y, s, 2); c.fillRect(x, y, 2, s);
+            c.save();
+            c.fillStyle = color;
+            c.fillRect(x, y, s, s);
+            c.fillStyle = 'rgba(255,255,255,0.15)';
+            c.fillRect(x, y, s, 2);
+            c.fillRect(x, y, 2, s);
+            c.restore();
             // emoji is rendered separately after arena loop (since ctx font state is global)
           },
           drawEmoji(c, typeStr, x, y, sz) {
             const emojis = { I: '🌊', J: '💎', L: '🔥', O: '⭐', S: '🍀', T: '🦄', Z: '🎯', X: '⬛' };
             const em = emojis[typeStr] || '✨';
+            c.save();
             c.font = `${Math.round(sz * 0.65)}px serif`;
             c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.globalAlpha = 0.6;
             c.fillText(em, x + sz / 2, y + sz / 2);
+            c.restore();
           }
         }
       ];
+
+      shuffleExceptFirst(BLOCK_STYLES);
 
       let currentStyleIndex = 0;
 
@@ -536,7 +565,7 @@
         for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { arena[y][x] = 0; arenaType[y][x] = 0; }
         const moves = [];
         for (let x = 0; x < COLS; x++) {
-          const tc = sorted[0];
+          const tc = sorted[sorted.length - 1];
           for (let y = tc; y < ROWS; y++) if (!cs.has(y) && snap[y][x]) { arena[y][x] = snap[y][x]; arenaType[y][x] = snapT[y][x]; }
           const above = [];
           for (let y = 0; y < tc; y++) if (snap[y][x]) above.push({ origY: y, type: snap[y][x], tstr: snapT[y][x] });
