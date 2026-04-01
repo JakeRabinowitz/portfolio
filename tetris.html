@@ -498,7 +498,7 @@
       let particles = [], shockwaves = [], celebParticles = [];
       let styleTransition = null; // {elapsed,duration}
 
-      const player = { matrix: null, score: 0, level: 0, x: 0, y: 0, type: '' };
+      const player = { matrix: null, score: 0, x: 0, y: 0, type: '' };
       const next = { matrix: null, type: '' };
 
       // ══════════════════════════════════════
@@ -579,7 +579,11 @@
         return moves;
       }
       let pendingLineCount = 0;
-      function applyLineClearScore(n) { if (n > 0) { player.score += n * 10; player.level = Math.floor(player.score / 100); } }
+      function applyLineClearScore(n) {
+        if (n > 0) {
+          player.score += n * 10 * comboCount;
+        }
+      }
       function finishLineClearPhase() {
         const rows = lineClearState.rows, n = rows.length;
         for (const y of rows) for (let x = 0; x < COLS; x++) { arena[y][x] = 0; arenaType[y][x] = 0; }
@@ -964,8 +968,8 @@
         if (lockDelayActive && lockDelayResets < MAX_LOCK_RESETS) { lockDelayTimer = 0; lockDelayResets++; }
       }
       function updateHUD() {
-        document.getElementById('score').textContent = player.score;
-        document.getElementById('lines').textContent = totalLines;
+        document.getElementById('score').textContent = player.score.toLocaleString('en');
+        document.getElementById('lines').textContent = totalLines.toLocaleString('en');
       }
 
       // ══════════════════════════════════════
@@ -1022,7 +1026,7 @@
       // ══════════════════════════════════════
       function startGame() {
         arena = makeMatrix(COLS, ROWS); arenaType = makeMatrix(COLS, ROWS);
-        player.score = 0; player.level = 0; totalLines = 0; nextMilestone = 100; pendingMilestone = false;
+        player.score = 0; totalLines = 0; nextMilestone = 100; pendingMilestone = false;
         gameState = 'playing'; lineClearState = null; gravityState = null;
         releaseQuickFallActive = false; releaseQuickFallTimer = 0;
         lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0; pointerHeld = false;
