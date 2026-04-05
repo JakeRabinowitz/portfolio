@@ -48,6 +48,17 @@
         width: 100%;
         max-width: 420px;
         padding: 0 4px;
+        transition: opacity 0.25s, max-height 0.25s;
+        overflow: hidden;
+        max-height: 120px;
+      }
+
+      .top-hud.hidden {
+        opacity: 0;
+        max-height: 0;
+        pointer-events: none;
+        padding: 0;
+        margin: 0;
       }
 
       .hud-stats.info {
@@ -115,17 +126,75 @@
         cursor: pointer;
       }
 
-      .footer {
-        font-size: 10px;
-        color: var(--muted);
-        text-align: center;
-        opacity: 0.7;
+      button.btn:hover {
+        background: rgba(255, 255, 255, 0.12);
       }
 
-      @media(max-height:700px) {
-        .footer {
-          display: none
-        }
+
+
+      /* Fullscreen overlay HUD — shown when in fullscreen mode */
+      #fs-hud {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+        display: none;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 8px 12px;
+        background: rgba(6, 16, 37, 0.82);
+        backdrop-filter: blur(4px);
+        pointer-events: none;
+      }
+
+      #fs-hud.visible {
+        display: flex;
+      }
+
+      .fs-stat {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .fs-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .fs-val {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      /* Exit fullscreen button, overlaid on game */
+      #fs-exit-btn {
+        position: fixed;
+        top: 8px;
+        right: 12px;
+        z-index: 51;
+        display: none;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        color: #e6eef8;
+        font-size: 12px;
+        padding: 5px 10px;
+        cursor: pointer;
+      }
+
+      #fs-exit-btn.visible {
+        display: block;
+      }
+
+      #fs-exit-btn:hover {
+        background: rgba(255,255,255,0.16);
       }
 
       /* ── MILESTONE OVERLAY ── */
@@ -250,7 +319,7 @@
 
   <body>
     <div class="container">
-      <div class="top-hud">
+      <div class="top-hud" id="top-hud">
         <div class="info hud-stats">
           <div class="small">Score</div>
           <div id="score" class="big">0</div>
@@ -265,13 +334,21 @@
         </div>
         <div class="hud-actions">
           <button id="restart" class="btn">Restart</button>
+          <button id="fullscreen-btn" class="btn" title="Fullscreen">⛶</button>
         </div>
       </div>
       <div class="game">
         <canvas id="tetris" width="320" height="736"></canvas>
       </div>
-      <div class="footer small">Drag to move · release to drop · Z/X or ↑ to rotate · Space = hard drop</div>
+
     </div>
+
+    <!-- Fullscreen HUD (shown in fullscreen mode) -->
+    <div id="fs-hud">
+      <div class="fs-stat"><span class="fs-label">Score</span><span class="fs-val" id="fs-score">0</span></div>
+      <div class="fs-stat"><span class="fs-label">Lines</span><span class="fs-val" id="fs-lines">0</span></div>
+    </div>
+    <button id="fs-exit-btn">✕ Exit fullscreen</button>
 
     <div id="milestone-overlay">
       <div class="milestone-card">
@@ -285,6 +362,33 @@
     </div>
 
     <script>
+      // ══════════════════════════════════════
+      // FULLSCREEN
+      // ══════════════════════════════════════
+      let isFullscreen = false;
+
+      function enterFullscreen() {
+        isFullscreen = true;
+        document.getElementById('top-hud').classList.add('hidden');
+        document.getElementById('fs-hud').classList.add('visible');
+        document.getElementById('fs-exit-btn').classList.add('visible');
+        document.getElementById('fullscreen-btn').textContent = '⛶';
+        fitCanvas();
+      }
+
+      function exitFullscreen() {
+        isFullscreen = false;
+        document.getElementById('top-hud').classList.remove('hidden');
+        document.getElementById('fs-hud').classList.remove('visible');
+        document.getElementById('fs-exit-btn').classList.remove('visible');
+        fitCanvas();
+      }
+
+      document.getElementById('fullscreen-btn').onclick = () => {
+        if (isFullscreen) exitFullscreen(); else enterFullscreen();
+      };
+      document.getElementById('fs-exit-btn').onclick = exitFullscreen;
+
       // ══════════════════════════════════════
       // COLOR HELPERS
       // ══════════════════════════════════════
@@ -303,21 +407,12 @@
       function shuffleExceptFirst(array) {
         const shuffleMe = array.slice(1);
         let currentIndex = shuffleMe.length;
-
-        // While there remain elements to shuffle...
         while (currentIndex != 0) {
-          // Pick a remaining element...
           let randomIndex = Math.floor(Math.random() * currentIndex);
           currentIndex--;
-
-          // And swap it with the current element.
-          [shuffleMe[currentIndex], shuffleMe[randomIndex]] = [
-            shuffleMe[randomIndex], shuffleMe[currentIndex]];
+          [shuffleMe[currentIndex], shuffleMe[randomIndex]] = [shuffleMe[randomIndex], shuffleMe[currentIndex]];
         }
-
-        shuffleMe.forEach((style, shuffleMeIndex) => {
-          array[shuffleMeIndex + 1] = style;
-        });
+        shuffleMe.forEach((style, shuffleMeIndex) => { array[shuffleMeIndex + 1] = style; });
       }
       const BLOCK_STYLES = [
         {
@@ -419,7 +514,6 @@
             c.fillRect(x, y, s, 2);
             c.fillRect(x, y, 2, s);
             c.restore();
-            // emoji is rendered separately after arena loop (since ctx font state is global)
           },
           drawEmoji(c, typeStr, x, y, sz) {
             const emojis = { I: '🌊', J: '💎', L: '🔥', O: '⭐', S: '🍀', T: '🦄', Z: '🎯', X: '⬛' };
@@ -460,7 +554,8 @@
       const nctx = nextCanvas.getContext('2d');
 
       function fitCanvas() {
-        const availH = Math.max(200, window.innerHeight - 196);
+        const hudH = isFullscreen ? 0 : 88;
+        const availH = Math.max(200, window.innerHeight - hudH - 24);
         const availW = Math.max(120, window.innerWidth - 24);
         const scale = Math.min(availH / canvas.height, availW / canvas.width);
         canvas.style.width = Math.round(canvas.width * scale) + 'px';
@@ -485,9 +580,9 @@
       // ══════════════════════════════════════
       function makeMatrix(w, h) { const m = []; for (let y = 0; y < h; y++)m.push(new Array(w).fill(0)); return m; }
       let arena = makeMatrix(COLS, ROWS);
-      let arenaType = makeMatrix(COLS, ROWS); // stores piece type letter for emoji draw
+      let arenaType = makeMatrix(COLS, ROWS);
 
-      let gameState = 'playing'; // playing|lineClear|gravity|milestone
+      let gameState = 'playing';
       let lineClearState = null, gravityState = null;
       let releaseQuickFallActive = false, releaseQuickFallTimer = 0;
       let lockDelayTimer = 0, lockDelayActive = false, lockDelayResets = 0;
@@ -496,7 +591,7 @@
       let totalLines = 0, nextMilestone = 100, pendingMilestone = false, milestoneStyleName = '';
       let comboCount = 0, comboDisplay = null, screenFlash = null;
       let particles = [], shockwaves = [], celebParticles = [];
-      let styleTransition = null; // {elapsed,duration}
+      let styleTransition = null;
 
       const player = { matrix: null, score: 0, x: 0, y: 0, type: '' };
       const next = { matrix: null, type: '' };
@@ -580,9 +675,7 @@
       }
       let pendingLineCount = 0;
       function applyLineClearScore(n) {
-        if (n > 0) {
-          player.score += n * 10 * comboCount;
-        }
+        if (n > 0) { player.score += n * 10 * comboCount; }
       }
       function finishLineClearPhase() {
         const rows = lineClearState.rows, n = rows.length;
@@ -928,7 +1021,7 @@
       function playerDrop() {
         if (gameState !== 'playing' || !player.matrix) return;
         player.y++;
-        if (collide(arena, player)) { player.y--; } // don't lock here — lock delay handles it
+        if (collide(arena, player)) { player.y--; }
         else { lockDelayActive = false; lockDelayTimer = 0; }
       }
 
@@ -968,9 +1061,59 @@
         if (lockDelayActive && lockDelayResets < MAX_LOCK_RESETS) { lockDelayTimer = 0; lockDelayResets++; }
       }
       function updateHUD() {
-        document.getElementById('score').textContent = player.score.toLocaleString('en');
-        document.getElementById('lines').textContent = totalLines.toLocaleString('en');
+        const scoreStr = player.score.toLocaleString('en');
+        const linesStr = totalLines.toLocaleString('en');
+        document.getElementById('score').textContent = scoreStr;
+        document.getElementById('lines').textContent = linesStr;
+        document.getElementById('fs-score').textContent = scoreStr;
+        document.getElementById('fs-lines').textContent = linesStr;
       }
+
+      // ══════════════════════════════════════
+      // GLOBAL DRAG — converts any screen X to canvas column
+      // ══════════════════════════════════════
+      let dragging = false;
+
+      function screenXToCanvasX(screenX) {
+        const r = canvas.getBoundingClientRect();
+        // Clamp to canvas bounds
+        const cx = Math.max(0, Math.min(r.width, screenX - r.left));
+        return cx * (canvas.width / r.width);
+      }
+
+      function canvasXToTargetColumn(canvasX) {
+        if (!player.matrix) return 0;
+        const { minX, maxX } = matrixFilledXBounds(player.matrix);
+        const center = maxX < 0 ? 0 : (minX + maxX) / 2;
+        const xb = playerXBounds(player.matrix);
+        return Math.max(xb.min, Math.min(xb.max, Math.round(canvasX / BLOCK - center)));
+      }
+
+      // Listen on the whole document for pointer events so drag works outside the canvas
+      document.addEventListener('pointerdown', e => {
+        if (e.target === document.getElementById('restart') ||
+            e.target === document.getElementById('fullscreen-btn') ||
+            e.target === document.getElementById('fs-exit-btn') ||
+            e.target === document.getElementById('continue-btn')) return;
+        if (gameState !== 'playing' || !player.matrix) return;
+        releaseQuickFallActive = false; pointerHeld = true;
+        dragging = true;
+        applyPlayerX(canvasXToTargetColumn(screenXToCanvasX(e.clientX)));
+      });
+
+      document.addEventListener('pointermove', e => {
+        if (!dragging || !player.matrix) return;
+        e.preventDefault();
+        applyPlayerX(canvasXToTargetColumn(screenXToCanvasX(e.clientX)));
+      }, { passive: false });
+
+      function endPointer(e) {
+        if (!dragging) return;
+        dragging = false; pointerHeld = false;
+        if (gameState === 'playing' && player.matrix) { releaseQuickFallActive = true; releaseQuickFallTimer = 0; }
+      }
+      document.addEventListener('pointerup', endPointer);
+      document.addEventListener('pointercancel', endPointer);
 
       // ══════════════════════════════════════
       // MAIN LOOP
@@ -1037,39 +1180,6 @@
       }
       document.getElementById('restart').onclick = () => startGame();
 
-      // ══════════════════════════════════════
-      // INPUT
-      // ══════════════════════════════════════
-      let dragging = false;
-      function canvasPointerX(e) {
-        const r = canvas.getBoundingClientRect();
-        return Math.max(0, Math.min(canvas.width, (e.clientX - r.left) * (canvas.width / r.width)));
-      }
-      function pointerXToTargetColumn(cx, matrix) {
-        const { minX, maxX } = matrixFilledXBounds(matrix);
-        if (maxX < 0) return 0;
-        const center = (minX + maxX) / 2;
-        const xb = playerXBounds(matrix);
-        return Math.max(xb.min, Math.min(xb.max, Math.round(cx / BLOCK - center)));
-      }
-      canvas.addEventListener('pointerdown', e => {
-        if (gameState !== 'playing' || !player.matrix) return;
-        releaseQuickFallActive = false; pointerHeld = true;
-        canvas.setPointerCapture(e.pointerId); dragging = true;
-        applyPlayerX(pointerXToTargetColumn(canvasPointerX(e), player.matrix));
-      });
-      canvas.addEventListener('pointermove', e => {
-        if (!dragging || !player.matrix) return;
-        e.preventDefault();
-        applyPlayerX(pointerXToTargetColumn(canvasPointerX(e), player.matrix));
-      }, { passive: false });
-      function endCanvasPointer(e) {
-        dragging = false; pointerHeld = false;
-        if (gameState === 'playing' && player.matrix) { releaseQuickFallActive = true; releaseQuickFallTimer = 0; }
-        try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
-      }
-      canvas.addEventListener('pointerup', endCanvasPointer);
-      canvas.addEventListener('pointercancel', endCanvasPointer);
       document.addEventListener('keydown', event => {
         if (event.repeat) return;
         switch (event.key) {
@@ -1079,11 +1189,11 @@
           case 'ArrowUp': playerRotate(1); break;
           case 'z': case 'Z': playerRotate(-1); break;
           case 'x': case 'X': playerRotate(1); break;
+          case 'f': case 'F': if (isFullscreen) exitFullscreen(); else enterFullscreen(); break;
+          case 'Escape': if (isFullscreen) exitFullscreen(); break;
           case 'c': case 'C': {
             for (var y = arena.length - 1; y > 7; y--) {
-              for (var x = 0; x < arena[0].length; x++) {
-                arena[y][x] = 'T';
-              }
+              for (var x = 0; x < arena[0].length; x++) { arena[y][x] = 'T'; }
             }
             break;
           }
