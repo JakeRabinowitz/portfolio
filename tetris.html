@@ -528,9 +528,15 @@
         }
       ];
 
-      shuffleExceptFirst(BLOCK_STYLES);
+      // styleOrder holds the shuffled index order of BLOCK_STYLES (first index is always 0 = Classic)
+      let styleOrder = BLOCK_STYLES.map((_, i) => i);
+      shuffleExceptFirst(styleOrder);
 
-      let currentStyleIndex = 0;
+      let currentStyleIndex = 0; // index into styleOrder array, not into BLOCK_STYLES directly
+
+      function getCurrentStyle() {
+        return BLOCK_STYLES[styleOrder[currentStyleIndex]];
+      }
 
       // ══════════════════════════════════════
       // MILESTONE MESSAGES
@@ -576,6 +582,43 @@
       };
 
       // ══════════════════════════════════════
+      // PIECE BAG SYSTEM
+      // 4 copies of each piece type. For I and O (which have fewer than 4 variants),
+      // we pad their variant list by cycling duplicates.
+      // ══════════════════════════════════════
+      let pieceBag = [];
+
+      function createFreshBag() {
+        const pieces = 'TJLOSZI';
+        const bag = [];
+        for (const p of pieces) {
+          for (let i = 0; i < 4; i++) {
+            bag.push(p);
+          }
+        }
+        // Fisher-Yates shuffle
+        for (let i = bag.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [bag[i], bag[j]] = [bag[j], bag[i]];
+        }
+        return bag;
+      }
+
+      function getVariantForType(type) {
+        const variants = SHAPES[type];
+        // Pick a random variant; for pieces with fewer than 4 rotations,
+        // all rotations cycle so any is fine as starting orientation
+        return cloneMatrix(variants[Math.floor(Math.random() * variants.length)]);
+      }
+
+      function drawFromBag() {
+        if (pieceBag.length === 0) {
+          pieceBag = createFreshBag();
+        }
+        return pieceBag.pop();
+      }
+
+      // ══════════════════════════════════════
       // STATE
       // ══════════════════════════════════════
       function makeMatrix(w, h) { const m = []; for (let y = 0; y < h; y++)m.push(new Array(w).fill(0)); return m; }
@@ -597,12 +640,81 @@
       const next = { matrix: null, type: '' };
 
       // ══════════════════════════════════════
+      // LOCAL STORAGE SAVE / LOAD
+      // ══════════════════════════════════════
+      const SAVE_KEY = 'tetris_save_v1';
+
+      function saveGame() {
+        if (gameState !== 'playing' && gameState !== 'milestone') return;
+        try {
+          const state = {
+            arena: arena.map(r => r.slice()),
+            arenaType: arenaType.map(r => r.slice()),
+            score: player.score,
+            totalLines,
+            nextMilestone,
+            currentStyleIndex,
+            styleOrder: styleOrder.slice(),
+            pieceBag: pieceBag.slice(),
+            next: { type: next.type, matrix: next.matrix ? next.matrix.map(r => r.slice()) : null },
+            player: {
+              type: player.type,
+              matrix: player.matrix ? player.matrix.map(r => r.slice()) : null,
+              x: player.x,
+              y: player.y
+            }
+          };
+          localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+        } catch (e) {
+          // localStorage may be unavailable; silently ignore
+        }
+      }
+
+      function loadGame() {
+        try {
+          const raw = localStorage.getItem(SAVE_KEY);
+          if (!raw) return false;
+          const state = JSON.parse(raw);
+
+          // Validate essential fields exist
+          if (!state.arena || !state.arenaType || !state.next || !state.player) return false;
+          if (!Array.isArray(state.arena) || state.arena.length !== ROWS) return false;
+          if (!Array.isArray(state.styleOrder) || state.styleOrder.length !== BLOCK_STYLES.length) return false;
+
+          arena = state.arena;
+          arenaType = state.arenaType;
+          player.score = state.score || 0;
+          totalLines = state.totalLines || 0;
+          nextMilestone = state.nextMilestone || 100;
+          currentStyleIndex = state.currentStyleIndex || 0;
+          styleOrder = state.styleOrder;
+          pieceBag = Array.isArray(state.pieceBag) ? state.pieceBag : createFreshBag();
+
+          next.type = state.next.type;
+          next.matrix = state.next.matrix;
+
+          player.type = state.player.type;
+          player.matrix = state.player.matrix;
+          player.x = state.player.x;
+          player.y = state.player.y;
+
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function clearSave() {
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+      }
+
+      // ══════════════════════════════════════
       // MILESTONE
       // ══════════════════════════════════════
       function checkMilestone(lines) {
         if (lines >= nextMilestone) {
           currentStyleIndex = (currentStyleIndex + 1) % BLOCK_STYLES.length;
-          milestoneStyleName = BLOCK_STYLES[currentStyleIndex].name;
+          milestoneStyleName = getCurrentStyle().name;
           nextMilestone += 100; pendingMilestone = true;
           styleTransition = { elapsed: 0, duration: 500 };
           spawnCelebration();
@@ -631,6 +743,7 @@
         document.getElementById('milestone-style').textContent = '✨ New Style: ' + milestoneStyleName;
         document.getElementById('milestone-overlay').classList.add('show');
         gameState = 'milestone';
+        saveGame();
       }
       document.getElementById('continue-btn').onclick = () => {
         document.getElementById('milestone-overlay').classList.remove('show');
@@ -785,11 +898,12 @@
       // ══════════════════════════════════════
       function drawBlock(c, color, px, py, tstr, sz) {
         sz = sz || BLOCK;
-        const style = BLOCK_STYLES[currentStyleIndex];
+        const style = getCurrentStyle();
         if (styleTransition) {
           const t = Math.min(1, styleTransition.elapsed / styleTransition.duration);
           if (t < 1) {
-            const prev = BLOCK_STYLES[(currentStyleIndex - 1 + BLOCK_STYLES.length) % BLOCK_STYLES.length];
+            const prevStyleIdx = styleOrder[(currentStyleIndex - 1 + BLOCK_STYLES.length) % BLOCK_STYLES.length];
+            const prev = BLOCK_STYLES[prevStyleIdx];
             c.save(); c.globalAlpha = 1 - t; prev.draw(c, color, px, py, sz); c.restore();
             c.save(); c.globalAlpha = t; style.draw(c, color, px, py, sz); c.restore();
             if (style.drawEmoji && t > 0.5) { c.save(); c.globalAlpha = (t - 0.5) * 2; style.drawEmoji(c, tstr, px, py, sz); c.restore(); }
@@ -997,9 +1111,11 @@
       function cloneMatrix(m) { return m.map(r => r.slice()); }
 
       function generateNext() {
-        const pieces = 'TJLOSZI';
-        next.type = pieces[Math.floor(Math.random() * pieces.length)];
-        const variants = SHAPES[next.type];
+        const type = drawFromBag();
+        next.type = type;
+        const variants = SHAPES[type];
+        // For pieces with fewer than 4 variants (I has 2, O has 1),
+        // pad by cycling: pick from all available rotations
         let chosen = cloneMatrix(variants[Math.floor(Math.random() * variants.length)]);
         function bboxH(m) { let minY = 99, maxY = -1; for (let y = 0; y < m.length; y++)for (let x = 0; x < m[y].length; x++)if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); } return maxY < 0 ? 0 : maxY - minY + 1; }
         if (bboxH(chosen) > BOARD_TOP_ROWS) for (const v of variants) if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
@@ -1016,6 +1132,7 @@
         player.y = spawnYAboveBoard(player.matrix);
         lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0;
         if (collide(arena, player)) arena.forEach(row => row.fill(0));
+        saveGame();
       }
 
       function playerDrop() {
@@ -1028,6 +1145,7 @@
       function lockPieceNow() {
         if (!player.matrix) return;
         merge(arena, player); afterLockPiece(); updateHUD();
+        saveGame();
       }
 
       function applyPlayerX(targetX) {
@@ -1168,6 +1286,7 @@
       // INIT
       // ══════════════════════════════════════
       function startGame() {
+        clearSave();
         arena = makeMatrix(COLS, ROWS); arenaType = makeMatrix(COLS, ROWS);
         player.score = 0; totalLines = 0; nextMilestone = 100; pendingMilestone = false;
         gameState = 'playing'; lineClearState = null; gravityState = null;
@@ -1176,8 +1295,26 @@
         comboCount = 0; comboDisplay = null; screenFlash = null; styleTransition = null;
         particles = []; shockwaves = []; celebParticles = []; currentStyleIndex = 0; pendingLineCount = 0;
         document.getElementById('milestone-overlay').classList.remove('show');
-        generateNext(); playerReset(); updateHUD(); update();
+        // Reset style order with fresh shuffle
+        styleOrder = BLOCK_STYLES.map((_, i) => i);
+        shuffleExceptFirst(styleOrder);
+        // Fresh piece bag
+        pieceBag = createFreshBag();
+        generateNext(); playerReset(); updateHUD();
       }
+
+      function resumeGame() {
+        // Restore was successful; just kick off the loop
+        gameState = 'playing';
+        lineClearState = null; gravityState = null;
+        releaseQuickFallActive = false; releaseQuickFallTimer = 0;
+        lockDelayActive = false; lockDelayTimer = 0; lockDelayResets = 0; pointerHeld = false;
+        comboCount = 0; comboDisplay = null; screenFlash = null; styleTransition = null;
+        particles = []; shockwaves = []; celebParticles = []; pendingLineCount = 0;
+        document.getElementById('milestone-overlay').classList.remove('show');
+        updateHUD();
+      }
+
       document.getElementById('restart').onclick = () => startGame();
 
       document.addEventListener('keydown', event => {
@@ -1205,7 +1342,14 @@
         draw();
       });
 
-      startGame();
+      // Try to resume from localStorage; fall back to fresh game
+      if (loadGame()) {
+        resumeGame();
+        update();
+      } else {
+        startGame();
+        update();
+      }
     </script>
   </body>
 
