@@ -180,8 +180,8 @@
         right: 12px;
         z-index: 51;
         display: none;
-        background: rgba(255,255,255,0.08);
-        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 8px;
         color: #e6eef8;
         font-size: 12px;
@@ -194,7 +194,7 @@
       }
 
       #fs-exit-btn:hover {
-        background: rgba(255,255,255,0.16);
+        background: rgba(255, 255, 255, 0.16);
       }
 
       /* ── MILESTONE OVERLAY ── */
@@ -583,17 +583,27 @@
 
       // ══════════════════════════════════════
       // PIECE BAG SYSTEM
-      // 4 copies of each piece type. For I and O (which have fewer than 4 variants),
-      // we pad their variant list by cycling duplicates.
+      // 28-slot bag: each of the 7 piece types gets exactly 4 slots, keeping
+      // all types equally likely (1/7 each). Within those 4 slots the rotation
+      // indices are spread evenly across the type's actual variants, so each
+      // distinct orientation is equally likely within its type:
+      //   J/L/T (4 rotations): slots carry rotations [0,1,2,3]
+      //   S/Z/I (2 rotations): slots carry rotations [0,1,0,1]
+      //   O     (1 rotation):  slots carry rotations [0,0,0,0]
+      // The bag is Fisher-Yates shuffled before use.
       // ══════════════════════════════════════
+      const BAG_ROTATIONS = {
+        I: [1, 1, 0, 1], J: [0, 1, 2, 3], L: [0, 1, 2, 3],
+        O: [0, 0, 0, 0], S: [0, 1, 0, 1], T: [0, 1, 2, 3], Z: [0, 1, 0, 1]
+      };
+
       let pieceBag = [];
 
       function createFreshBag() {
-        const pieces = 'TJLOSZI';
         const bag = [];
-        for (const p of pieces) {
-          for (let i = 0; i < 4; i++) {
-            bag.push(p);
+        for (const [type, rots] of Object.entries(BAG_ROTATIONS)) {
+          for (const vi of rots) {
+            bag.push({ type, vi });
           }
         }
         // Fisher-Yates shuffle
@@ -604,18 +614,11 @@
         return bag;
       }
 
-      function getVariantForType(type) {
-        const variants = SHAPES[type];
-        // Pick a random variant; for pieces with fewer than 4 rotations,
-        // all rotations cycle so any is fine as starting orientation
-        return cloneMatrix(variants[Math.floor(Math.random() * variants.length)]);
-      }
-
       function drawFromBag() {
         if (pieceBag.length === 0) {
           pieceBag = createFreshBag();
         }
-        return pieceBag.pop();
+        return pieceBag.pop(); // returns { type, vi }
       }
 
       // ══════════════════════════════════════
@@ -688,7 +691,13 @@
           nextMilestone = state.nextMilestone || 100;
           currentStyleIndex = state.currentStyleIndex || 0;
           styleOrder = state.styleOrder;
-          pieceBag = Array.isArray(state.pieceBag) ? state.pieceBag : createFreshBag();
+          const validTypes = new Set('IJLOSTZ');
+          const bagOk = Array.isArray(state.pieceBag) && state.pieceBag.every(e =>
+            e && typeof e === 'object' && typeof e.type === 'string' &&
+            validTypes.has(e.type) && typeof e.vi === 'number' &&
+            e.vi >= 0 && e.vi < SHAPES[e.type].length
+          );
+          pieceBag = bagOk ? state.pieceBag : createFreshBag();
 
           next.type = state.next.type;
           next.matrix = state.next.matrix;
@@ -705,7 +714,7 @@
       }
 
       function clearSave() {
-        try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+        try { localStorage.removeItem(SAVE_KEY); } catch (e) { }
       }
 
       // ══════════════════════════════════════
@@ -1111,12 +1120,12 @@
       function cloneMatrix(m) { return m.map(r => r.slice()); }
 
       function generateNext() {
-        const type = drawFromBag();
+        const { type, vi } = drawFromBag();
         next.type = type;
         const variants = SHAPES[type];
-        // For pieces with fewer than 4 variants (I has 2, O has 1),
-        // pad by cycling: pick from all available rotations
-        let chosen = cloneMatrix(variants[Math.floor(Math.random() * variants.length)]);
+        let chosen = cloneMatrix(variants[vi]);
+        // Safety: if this rotation would be too tall to spawn, use the first
+        // variant that fits (shouldn't normally be needed with defined SHAPES).
         function bboxH(m) { let minY = 99, maxY = -1; for (let y = 0; y < m.length; y++)for (let x = 0; x < m[y].length; x++)if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); } return maxY < 0 ? 0 : maxY - minY + 1; }
         if (bboxH(chosen) > BOARD_TOP_ROWS) for (const v of variants) if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
         next.matrix = chosen;
@@ -1210,9 +1219,9 @@
       // Listen on the whole document for pointer events so drag works outside the canvas
       document.addEventListener('pointerdown', e => {
         if (e.target === document.getElementById('restart') ||
-            e.target === document.getElementById('fullscreen-btn') ||
-            e.target === document.getElementById('fs-exit-btn') ||
-            e.target === document.getElementById('continue-btn')) return;
+          e.target === document.getElementById('fullscreen-btn') ||
+          e.target === document.getElementById('fs-exit-btn') ||
+          e.target === document.getElementById('continue-btn')) return;
         if (gameState !== 'playing' || !player.matrix) return;
         releaseQuickFallActive = false; pointerHeld = true;
         dragging = true;
