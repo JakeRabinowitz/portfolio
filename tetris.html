@@ -130,8 +130,6 @@
         background: rgba(255, 255, 255, 0.12);
       }
 
-
-
       /* Fullscreen overlay HUD — shown when in fullscreen mode */
       #fs-hud {
         position: fixed;
@@ -307,11 +305,73 @@
         cursor: pointer;
         letter-spacing: 0.5px;
         box-shadow: 0 4px 20px rgba(124, 58, 237, 0.5);
-        transition: transform 0.1s;
+        transition: transform 0.1s, opacity 0.3s;
       }
 
-      #continue-btn:active {
+      #continue-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      #continue-btn:not(:disabled):active {
         transform: scale(0.96);
+      }
+
+      /* Countdown ring around continue button */
+      .continue-wrapper {
+        position: relative;
+        display: inline-block;
+      }
+
+      #countdown-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 20px;
+        pointer-events: none;
+        overflow: visible;
+      }
+
+      #countdown-ring rect {
+        fill: none;
+        stroke: rgba(125, 211, 252, 0.7);
+        stroke-width: 3;
+        stroke-linecap: round;
+      }
+
+      #countdown-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+        min-height: 18px;
+        transition: opacity 0.3s;
+      }
+
+      /* Milestone countdown */
+      #continue-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .continue-wrap {
+        position: relative;
+        display: inline-block;
+      }
+
+      #countdown-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 20px;
+        pointer-events: none;
+        width: calc(100% + 12px);
+        height: calc(100% + 12px);
+      }
+
+      #countdown-text {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 10px;
+        min-height: 18px;
       }
 
     </style>
@@ -340,7 +400,6 @@
       <div class="game">
         <canvas id="tetris" width="320" height="736"></canvas>
       </div>
-
     </div>
 
     <!-- Fullscreen HUD (shown in fullscreen mode) -->
@@ -357,7 +416,10 @@
         <div class="lines-big" id="milestone-lines">100</div>
         <div class="lines-label">lines</div>
         <div class="style-badge" id="milestone-style">New Style Unlocked</div>
-        <button id="continue-btn">Continue →</button>
+        <div class="continue-wrapper">
+          <button id="continue-btn" disabled>Continue →</button>
+        </div>
+        <div id="countdown-label">Wait 10 seconds…</div>
       </div>
     </div>
 
@@ -528,11 +590,10 @@
         }
       ];
 
-      // styleOrder holds the shuffled index order of BLOCK_STYLES (first index is always 0 = Classic)
       let styleOrder = BLOCK_STYLES.map((_, i) => i);
       shuffleExceptFirst(styleOrder);
 
-      let currentStyleIndex = 0; // index into styleOrder array, not into BLOCK_STYLES directly
+      let currentStyleIndex = 0;
 
       function getCurrentStyle() {
         return BLOCK_STYLES[styleOrder[currentStyleIndex]];
@@ -541,10 +602,111 @@
       // ══════════════════════════════════════
       // MILESTONE MESSAGES
       // ══════════════════════════════════════
+      // ── MILESTONE COUNTDOWN ──
+      let milestoneCountdownTimer = null;
+
+      function startMilestoneCountdown() {
+        const btn = document.getElementById('continue-btn');
+        const txt = document.getElementById('countdown-text');
+        const ringEl = document.getElementById('countdown-ring');
+        btn.disabled = true;
+        const WAIT = MILESTONE_WAIT_MS;
+        const start = performance.now();
+        function tick(now) {
+          const elapsed = now - start;
+          const remaining = Math.max(0, WAIT - elapsed);
+          const secs = Math.ceil(remaining / 1000);
+          const progress = Math.min(1, elapsed / WAIT);
+          // Size ring canvas to match button
+          const bRect = btn.getBoundingClientRect();
+          const W = bRect.width + 12, H = bRect.height + 12;
+          ringEl.width = Math.max(1, W); ringEl.height = Math.max(1, H);
+          const rc = ringEl.getContext('2d');
+          rc.clearRect(0, 0, W, H);
+          // track
+          rc.beginPath(); rc.roundRect(0, 0, W, H, 14);
+          rc.strokeStyle = 'rgba(255,255,255,0.08)'; rc.lineWidth = 3; rc.stroke();
+          // progress: clip to rounded rect, then draw a left-to-right fill
+          if (progress > 0) {
+            rc.save();
+            rc.beginPath(); rc.roundRect(1.5, 1.5, W - 3, H - 3, 13); rc.clip();
+            rc.fillStyle = 'rgba(125,211,252,0.35)';
+            rc.fillRect(0, 0, W * progress, H);
+            rc.restore();
+            rc.beginPath(); rc.roundRect(1.5, 1.5, W - 3, H - 3, 13);
+            rc.strokeStyle = '#7dd3fc'; rc.lineWidth = 2; rc.stroke();
+          }
+          if (remaining > 0) {
+            txt.textContent = 'Continue in ' + secs + 's…';
+            milestoneCountdownTimer = requestAnimationFrame(tick);
+          } else {
+            txt.textContent = '';
+            btn.disabled = false;
+            rc.clearRect(0, 0, W, H);
+            milestoneCountdownTimer = null;
+          }
+        }
+        milestoneCountdownTimer = requestAnimationFrame(tick);
+      }
+
+      function cancelMilestoneCountdown() {
+        if (milestoneCountdownTimer !== null) {
+          cancelAnimationFrame(milestoneCountdownTimer);
+          milestoneCountdownTimer = null;
+        }
+        const btn = document.getElementById('continue-btn');
+        if (btn) { btn.disabled = false; }
+        const txt = document.getElementById('countdown-text');
+        if (txt) txt.textContent = '';
+      }
+
       const MILESTONE_MSGS = [
         'INCREDIBLE!', 'ON FIRE! 🔥', 'UNSTOPPABLE!', 'LEGENDARY!!',
         'ARE YOU HUMAN?!', 'TETRIS MASTER!', '🏆 CHAMPION!', 'GODLIKE!!!'
       ];
+
+      // ══════════════════════════════════════
+      // MILESTONE COUNTDOWN
+      // ══════════════════════════════════════
+      const MILESTONE_WAIT_MS = 10000; // 10-second lockout before continue
+      const SAVE_VERSION = 2;          // bump to invalidate old saves
+      let milestoneCountdownStart = null;
+      let milestoneCountdownInterval = null;
+
+      function startMilestoneCountdown() {
+        const btn = document.getElementById('continue-btn');
+        const label = document.getElementById('countdown-label');
+        btn.disabled = true;
+        milestoneCountdownStart = Date.now();
+
+        function tick() {
+          const elapsed = Date.now() - milestoneCountdownStart;
+          const remaining = Math.max(0, Math.ceil((MILESTONE_WAIT_MS - elapsed) / 1000));
+          if (remaining > 0) {
+            label.textContent = `Wait ${remaining} second${remaining !== 1 ? 's' : ''}…`;
+          } else {
+            label.textContent = 'Ready!';
+            btn.disabled = false;
+            clearInterval(milestoneCountdownInterval);
+            milestoneCountdownInterval = null;
+          }
+        }
+
+        tick();
+        milestoneCountdownInterval = setInterval(tick, 250);
+      }
+
+      function resetMilestoneCountdown() {
+        if (milestoneCountdownInterval) {
+          clearInterval(milestoneCountdownInterval);
+          milestoneCountdownInterval = null;
+        }
+        const btn = document.getElementById('continue-btn');
+        const label = document.getElementById('countdown-label');
+        btn.disabled = true;
+        label.textContent = `Wait ${MILESTONE_WAIT_MS / 1000} seconds…`;
+        milestoneCountdownStart = null;
+      }
 
       // ══════════════════════════════════════
       // GAME CONSTANTS
@@ -583,14 +745,6 @@
 
       // ══════════════════════════════════════
       // PIECE BAG SYSTEM
-      // 28-slot bag: each of the 7 piece types gets exactly 4 slots, keeping
-      // all types equally likely (1/7 each). Within those 4 slots the rotation
-      // indices are spread evenly across the type's actual variants, so each
-      // distinct orientation is equally likely within its type:
-      //   J/L/T (4 rotations): slots carry rotations [0,1,2,3]
-      //   S/Z/I (2 rotations): slots carry rotations [0,1,0,1]
-      //   O     (1 rotation):  slots carry rotations [0,0,0,0]
-      // The bag is Fisher-Yates shuffled before use.
       // ══════════════════════════════════════
       const BAG_ROTATIONS = {
         I: [1, 1, 0, 1], J: [0, 1, 2, 3], L: [0, 1, 2, 3],
@@ -606,7 +760,6 @@
             bag.push({ type, vi });
           }
         }
-        // Fisher-Yates shuffle
         for (let i = bag.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           [bag[i], bag[j]] = [bag[j], bag[i]];
@@ -618,7 +771,7 @@
         if (pieceBag.length === 0) {
           pieceBag = createFreshBag();
         }
-        return pieceBag.pop(); // returns { type, vi }
+        return pieceBag.pop();
       }
 
       // ══════════════════════════════════════
@@ -643,14 +796,19 @@
       const next = { matrix: null, type: '' };
 
       // ══════════════════════════════════════
-      // LOCAL STORAGE SAVE / LOAD
+      // SAVE / LOAD  (versioned + backup slot)
       // ══════════════════════════════════════
       const SAVE_KEY = 'tetris_save_v1';
+      const SAVE_KEY_BAK = 'tetris_save_v1_bak';
 
+      /** Write the current game state to localStorage.
+       *  A second "backup" slot always holds the previous save so we can
+       *  recover if the primary slot gets corrupted mid-write. */
       function saveGame() {
         if (gameState !== 'playing' && gameState !== 'milestone') return;
         try {
           const state = {
+            version: SAVE_VERSION,
             arena: arena.map(r => r.slice()),
             arenaType: arenaType.map(r => r.slice()),
             score: player.score,
@@ -659,7 +817,10 @@
             currentStyleIndex,
             styleOrder: styleOrder.slice(),
             pieceBag: pieceBag.slice(),
-            next: { type: next.type, matrix: next.matrix ? next.matrix.map(r => r.slice()) : null },
+            next: {
+              type: next.type,
+              matrix: next.matrix ? next.matrix.map(r => r.slice()) : null
+            },
             player: {
               type: player.type,
               matrix: player.matrix ? player.matrix.map(r => r.slice()) : null,
@@ -667,54 +828,128 @@
               y: player.y
             }
           };
-          localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+          const json = JSON.stringify(state);
+
+          // Rotate: current primary → backup, then write new primary.
+          const existing = localStorage.getItem(SAVE_KEY);
+          if (existing) localStorage.setItem(SAVE_KEY_BAK, existing);
+          localStorage.setItem(SAVE_KEY, json);
         } catch (e) {
-          // localStorage may be unavailable; silently ignore
+          // localStorage unavailable (private mode / quota); silently ignore.
         }
       }
 
-      function loadGame() {
+      /** Validate and decode a raw JSON string into game state.
+       *  Returns the parsed object on success, or null on any error. */
+      function parseSave(raw) {
+        if (!raw) return null;
         try {
-          const raw = localStorage.getItem(SAVE_KEY);
-          if (!raw) return false;
           const state = JSON.parse(raw);
+          if (!state || typeof state !== 'object') return null;
 
-          // Validate essential fields exist
-          if (!state.arena || !state.arenaType || !state.next || !state.player) return false;
-          if (!Array.isArray(state.arena) || state.arena.length !== ROWS) return false;
-          if (!Array.isArray(state.styleOrder) || state.styleOrder.length !== BLOCK_STYLES.length) return false;
+          // Version check — reject saves from incompatible versions
+          if (state.version !== SAVE_VERSION) return null;
 
-          arena = state.arena;
-          arenaType = state.arenaType;
-          player.score = state.score || 0;
-          totalLines = state.totalLines || 0;
-          nextMilestone = state.nextMilestone || 100;
-          currentStyleIndex = state.currentStyleIndex || 0;
-          styleOrder = state.styleOrder;
+          // Required top-level fields
+          if (!Array.isArray(state.arena) || state.arena.length !== ROWS) return null;
+          if (!Array.isArray(state.arenaType) || state.arenaType.length !== ROWS) return null;
+          if (!state.next || typeof state.next !== 'object') return null;
+          if (!state.player || typeof state.player !== 'object') return null;
+
+          // Row widths
+          for (let y = 0; y < ROWS; y++) {
+            if (!Array.isArray(state.arena[y]) || state.arena[y].length !== COLS) return null;
+            if (!Array.isArray(state.arenaType[y]) || state.arenaType[y].length !== COLS) return null;
+          }
+
+          // styleOrder length must match current BLOCK_STYLES length
+          if (!Array.isArray(state.styleOrder) ||
+            state.styleOrder.length !== BLOCK_STYLES.length) return null;
+
+          // Validate pieceBag entries
           const validTypes = new Set('IJLOSTZ');
-          const bagOk = Array.isArray(state.pieceBag) && state.pieceBag.every(e =>
-            e && typeof e === 'object' && typeof e.type === 'string' &&
-            validTypes.has(e.type) && typeof e.vi === 'number' &&
-            e.vi >= 0 && e.vi < SHAPES[e.type].length
-          );
-          pieceBag = bagOk ? state.pieceBag : createFreshBag();
+          if (Array.isArray(state.pieceBag)) {
+            for (const e of state.pieceBag) {
+              if (!e || typeof e.type !== 'string' || !validTypes.has(e.type)) return null;
+              if (typeof e.vi !== 'number' || e.vi < 0 || e.vi >= SHAPES[e.type].length) return null;
+            }
+          } else {
+            state.pieceBag = [];   // will be replaced with a fresh bag
+          }
 
-          next.type = state.next.type;
-          next.matrix = state.next.matrix;
+          // Validate next piece
+          if (typeof state.next.type !== 'string' || !validTypes.has(state.next.type)) return null;
+          if (!Array.isArray(state.next.matrix)) return null;
 
-          player.type = state.player.type;
-          player.matrix = state.player.matrix;
-          player.x = state.player.x;
-          player.y = state.player.y;
+          // Player piece may be null (between pieces), otherwise validate
+          if (state.player.matrix !== null) {
+            if (!Array.isArray(state.player.matrix)) return null;
+            if (typeof state.player.type !== 'string' || !validTypes.has(state.player.type)) return null;
+          }
 
-          return true;
+          return state;
         } catch (e) {
-          return false;
+          return null;
         }
+      }
+
+      /** Apply a validated save object to live game state. */
+      function applySave(state) {
+        arena = state.arena;
+        arenaType = state.arenaType;
+
+        player.score = typeof state.score === 'number' ? state.score : 0;
+        totalLines = typeof state.totalLines === 'number' ? state.totalLines : 0;
+        nextMilestone = typeof state.nextMilestone === 'number' ? state.nextMilestone : 100;
+        currentStyleIndex = typeof state.currentStyleIndex === 'number' ? state.currentStyleIndex : 0;
+        styleOrder = state.styleOrder;
+        pieceBag = state.pieceBag.length ? state.pieceBag : createFreshBag();
+
+        next.type = state.next.type;
+        next.matrix = state.next.matrix;
+
+        player.type = state.player.type || '';
+        player.matrix = state.player.matrix || null;
+        player.x = typeof state.player.x === 'number' ? state.player.x : 0;
+        player.y = typeof state.player.y === 'number' ? state.player.y : 0;
+      }
+
+      /** Try to load a saved game.  Tries the primary slot first, then the
+       *  backup.  If a slot is corrupt the other is tried automatically.
+       *  Returns true if a usable save was found and applied. */
+      function loadGame() {
+        const primary = localStorage.getItem(SAVE_KEY);
+        const backup = localStorage.getItem(SAVE_KEY_BAK);
+
+        let state = parseSave(primary);
+        if (!state) {
+          // Primary is missing or corrupt — try backup
+          state = parseSave(backup);
+          if (state) {
+            // Restore backup to primary slot so next save builds on it
+            try { localStorage.setItem(SAVE_KEY, backup); } catch (e) { }
+          }
+        }
+
+        if (!state) return false;
+
+        applySave(state);
+
+        // If the saved player piece is missing or invalid, spawn a fresh one.
+        if (!player.matrix || !player.type) {
+          // Ensure next is populated before calling playerReset
+          if (!next.type || !next.matrix) generateNext();
+          // playerReset will be called by resumeGame() below
+        }
+
+        return true;
       }
 
       function clearSave() {
-        try { localStorage.removeItem(SAVE_KEY); } catch (e) { }
+        try {
+          localStorage.removeItem(SAVE_KEY);
+          localStorage.removeItem(SAVE_KEY_BAK);
+        } catch (e) { }
       }
 
       // ══════════════════════════════════════
@@ -752,9 +987,13 @@
         document.getElementById('milestone-style').textContent = '✨ New Style: ' + milestoneStyleName;
         document.getElementById('milestone-overlay').classList.add('show');
         gameState = 'milestone';
+        resetMilestoneCountdown();
+        startMilestoneCountdown();
         saveGame();
       }
       document.getElementById('continue-btn').onclick = () => {
+        // Guard: button should be disabled during countdown, but double-check
+        if (document.getElementById('continue-btn').disabled) return;
         document.getElementById('milestone-overlay').classList.remove('show');
         pendingMilestone = false;
         releaseQuickFallActive = false; releaseQuickFallTimer = 0;
@@ -1124,8 +1363,6 @@
         next.type = type;
         const variants = SHAPES[type];
         let chosen = cloneMatrix(variants[vi]);
-        // Safety: if this rotation would be too tall to spawn, use the first
-        // variant that fits (shouldn't normally be needed with defined SHAPES).
         function bboxH(m) { let minY = 99, maxY = -1; for (let y = 0; y < m.length; y++)for (let x = 0; x < m[y].length; x++)if (m[y][x]) { minY = Math.min(minY, y); maxY = Math.max(maxY, y); } return maxY < 0 ? 0 : maxY - minY + 1; }
         if (bboxH(chosen) > BOARD_TOP_ROWS) for (const v of variants) if (bboxH(v) <= BOARD_TOP_ROWS) { chosen = cloneMatrix(v); break; }
         next.matrix = chosen;
@@ -1197,13 +1434,12 @@
       }
 
       // ══════════════════════════════════════
-      // GLOBAL DRAG — converts any screen X to canvas column
+      // GLOBAL DRAG
       // ══════════════════════════════════════
       let dragging = false;
 
       function screenXToCanvasX(screenX) {
         const r = canvas.getBoundingClientRect();
-        // Clamp to canvas bounds
         const cx = Math.max(0, Math.min(r.width, screenX - r.left));
         return cx * (canvas.width / r.width);
       }
@@ -1216,7 +1452,6 @@
         return Math.max(xb.min, Math.min(xb.max, Math.round(canvasX / BLOCK - center)));
       }
 
-      // Listen on the whole document for pointer events so drag works outside the canvas
       document.addEventListener('pointerdown', e => {
         if (e.target === document.getElementById('restart') ||
           e.target === document.getElementById('fullscreen-btn') ||
@@ -1304,16 +1539,13 @@
         comboCount = 0; comboDisplay = null; screenFlash = null; styleTransition = null;
         particles = []; shockwaves = []; celebParticles = []; currentStyleIndex = 0; pendingLineCount = 0;
         document.getElementById('milestone-overlay').classList.remove('show');
-        // Reset style order with fresh shuffle
         styleOrder = BLOCK_STYLES.map((_, i) => i);
         shuffleExceptFirst(styleOrder);
-        // Fresh piece bag
         pieceBag = createFreshBag();
         generateNext(); playerReset(); updateHUD();
       }
 
       function resumeGame() {
-        // Restore was successful; just kick off the loop
         gameState = 'playing';
         lineClearState = null; gravityState = null;
         releaseQuickFallActive = false; releaseQuickFallTimer = 0;
@@ -1321,6 +1553,13 @@
         comboCount = 0; comboDisplay = null; screenFlash = null; styleTransition = null;
         particles = []; shockwaves = []; celebParticles = []; pendingLineCount = 0;
         document.getElementById('milestone-overlay').classList.remove('show');
+
+        // If the saved player piece is missing, spawn a new one now.
+        if (!player.matrix || !player.type) {
+          if (!next.type || !next.matrix) generateNext();
+          playerReset();
+        }
+
         updateHUD();
       }
 
@@ -1352,10 +1591,17 @@
       });
 
       // Try to resume from localStorage; fall back to fresh game
-      if (loadGame()) {
-        resumeGame();
-        update();
-      } else {
+      try {
+        if (loadGame()) {
+          resumeGame();
+          update();
+        } else {
+          startGame();
+          update();
+        }
+      } catch (e) {
+        // Any unexpected error during init → safe fallback to a fresh game
+        console.warn('Tetris: init error, starting fresh.', e);
         startGame();
         update();
       }
