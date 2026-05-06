@@ -27,6 +27,8 @@
         font-family: Inter, system-ui, Arial;
         background: linear-gradient(180deg, #071024 0%, #071026 100%);
         color: #e6eef8;
+        user-select: none;
+
       }
 
       .container {
@@ -733,6 +735,7 @@
       function gridY(y) { return BOARD_TOP_PAD + y * BLOCK; }
 
       const COLORS = { I: '#06b6d4', J: '#6366f1', L: '#f97316', O: '#f59e0b', S: '#10b981', T: '#a78bfa', Z: '#ef4444', X: '#334155' };
+      const GHOST_COLORS = { I: '#fc856d', J: '#9a9cf5', L: '#fab27f', O: '#f5c573', S: '#50f2bc', T: '#d1c3fa', Z: '#f79494', X: '#7ab1ff' };
       const SHAPES = {
         I: [[[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]], [[0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]]],
         J: [[[1, 0, 0], [1, 1, 1], [0, 0, 0]], [[0, 1, 1], [0, 1, 0], [0, 1, 0]], [[0, 0, 0], [1, 1, 1], [0, 0, 1]], [[0, 1, 0], [0, 1, 0], [1, 1, 0]]],
@@ -1188,8 +1191,8 @@
 
       function drawGhost(piece, ghostY) {
         if (!piece.matrix || ghostY === player.y) return;
-        ctx.save(); ctx.globalAlpha = 0.38;
-        ctx.strokeStyle = COLORS[piece.type] || '#94a3b8'; ctx.lineWidth = 3;
+        ctx.save(); ctx.globalAlpha = 0.48;
+        ctx.strokeStyle = GHOST_COLORS[piece.type] || '#94a3b8'; ctx.lineWidth = 4;
         piece.matrix.forEach((row, yy) => row.forEach((v, xx) => {
           if (v) { const px = piece.x + xx, py = ghostY + yy; ctx.strokeRect(px * BLOCK + 2, gridY(py) + 2, BLOCK - 5, BLOCK - 5); }
         }));
