@@ -1455,8 +1455,7 @@
       }
 
       document.addEventListener('pointerdown', e => {
-        if (e.target === document.getElementById('restart') ||
-          e.target === document.getElementById('fullscreen-btn') ||
+        if (e.target === document.getElementById('fullscreen-btn') ||
           e.target === document.getElementById('fs-exit-btn') ||
           e.target === document.getElementById('continue-btn')) return;
         if (gameState !== 'playing' || !player.matrix) return;
@@ -1564,8 +1563,6 @@
 
         updateHUD();
       }
-
-      document.getElementById('restart').onclick = () => startGame();
 
       document.addEventListener('keydown', event => {
         if (event.repeat) return;
